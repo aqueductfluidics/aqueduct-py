@@ -1,0 +1,32 @@
+# Byte-compiled / optimized / DLL files
+**/**__pycache__/
+**/*.py[cod]
+**/.python-version
+
+# C extensions
+*.so
+
+# log extensions
+*.log
+
+# .pid extensions
+*.pid
+
+.DS_store
+
+# pycharm
+.idea/
+
+# vscode
+.vscode/
+
+# setup
+*.egg-info/
+
+# python env or venv
+*/env
+*/venv
+
+# build
+build/*
+dist/
