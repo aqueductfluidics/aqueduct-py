@@ -1,12 +1,13 @@
-# Aqueduct Fluidics Core Application
+<p><img src="https://github.com/aqueductfluidics/.github/blob/main/profile/assets/images/logo_blue.svg" alt="Aqueduct Fluidics" /></p>
 
-The Aqueduct Fluidics Core Application is a Python-based software package designed for laboratory automation and instrumentation. It provides an abstraction layer that allows operators to write Python code to interface with devices such as pumps, valves, and sensors, without having to deal with low-level communication protocols.
+# Aqueduct Fluidics Python API
+
+The Aqueduct Fluidics Python API is a Python-based software package designed for laboratory automation and instrumentation. It provides an abstraction layer that allows operators to write Python code to interface with devices such as pumps, valves, and sensors, without having to deal with low-level communication protocols.
 
 ## Features
 
 -   Abstraction layer for device communication
 -   User-friendly interface for device control and data acquisition
--   Supports a variety of communication protocols including RS-485, USB, and CANbus
 -   Supports integration with various laboratory instruments and software platforms
 
 ## Getting Started
