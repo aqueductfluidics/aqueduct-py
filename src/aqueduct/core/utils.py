@@ -11,6 +11,7 @@ import json
 import threading
 import time
 import typing
+import socket
 
 from aqueduct.core.socket_constants import SOCKET_DELAY_S, SOCKET_TX_ATTEMPTS
 
@@ -28,12 +29,13 @@ def string_to_bool(string: str) -> bool:
         return False
     else:
         raise TypeError(
-            "Could not convert {} to a boolean value.".format(string))
+            f"Could not convert {string} to a boolean value.")
 
 
+# pylint: disable=too-many-arguments
 def send_and_wait_for_rx(
     message: str,
-    socket: "socket.socket",
+    sock: socket.socket,
     lock: typing.Union["threading.Lock", None],
     response: str,
     attempts: int = SOCKET_TX_ATTEMPTS,
@@ -44,38 +46,52 @@ def send_and_wait_for_rx(
     """
     Send a message over a socket and wait for a response.
 
-    :param message: The message to send.
-    :param socket: The socket to use for sending and receiving.
-    :param lock: The lock to use for synchronizing socket access.
-    :param response: The expected response to the message.
-    :param attempts: The number of attempts to make.
-    :param timeout: The timeout value for the socket.
-    :param size: The size of the buffer for receiving data.
-    :param delay_s: The delay between message sends.
-    :return: A tuple containing a boolean indicating success and the response data.
+    Args:
+        message: The message to send.
+        sock: The socket to use for sending and receiving.
+        lock: The lock to use for synchronizing socket access.
+        response: The expected response to the message.
+        attempts: The number of attempts to make.
+        timeout: The timeout value for the socket.
+        size: The size of the buffer for receiving data.
+        delay_s: The delay between message sends.
+
+    Returns:
+        A tuple containing a boolean indicating success and the response data.
     """
     i = 0
     while i < attempts:
-        if lock:
-            with lock:
-                socket.settimeout(timeout)
-                socket.send(message)
+        try:
+            if lock:
+                with lock:
+                    sock.settimeout(timeout)
+                    sock.send(message)
+                    time.sleep(SOCKET_DELAY_S)
+                    data = sock.recv(size)
+            else:
+                sock.settimeout(timeout)
+                sock.send(message)
                 time.sleep(SOCKET_DELAY_S)
-                data = socket.recv(size)
-        else:
-            socket.settimeout(timeout)
-            socket.send(message)
-            time.sleep(SOCKET_DELAY_S)
-            data = socket.recv(size)
+                data = sock.recv(size)
+
+        except socket.timeout:
+            # Socket timeout occurred, increment attempt counter and continue the loop.
+            i += 1
+            continue
+
         try:
             j = json.loads(data)
             if j[0] == response:
                 if delay_s is not None:
                     time.sleep(delay_s)
                 return True, j[1]
-        except json.decoder.JSONDecodeError:
+        except (json.decoder.JSONDecodeError, IndexError):
+            # Error occurred while parsing the received data as JSON, continue the loop.
             continue
+
         i += 1
+
+    # No successful response within the given attempts, return False and None.
     if delay_s is not None:
         time.sleep(delay_s)
     return False, None

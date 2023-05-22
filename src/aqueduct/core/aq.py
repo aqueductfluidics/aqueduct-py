@@ -314,7 +314,7 @@ class Aqueduct:
         """
         return send_and_wait_for_rx(
             message=message,
-            socket=self.socket,
+            sock=self.socket,
             lock=self.socket_lock,
             response=response,
             attempts=attempts,
