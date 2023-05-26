@@ -83,3 +83,37 @@ class OpticalDensityProbe(aqueduct.devices.base.obj.Device):
             ninety_deg = live[i].get('n')
             values.append((od, transmitted, ninety_deg))
         return tuple(values)
+    
+    @property
+    def optical_density(self) -> Tuple[float]: # pylint: disable=invalid-name
+        """
+        Get the optical density values from all probes.
+
+        Returns:
+            A tuple of optical density values for all probes.
+        """
+        all_values = self.get_all_values()
+        od_values = tuple(od for od, _, _ in all_values)
+        return od_values
+
+    def transmitted(self) -> Tuple[float]: # pylint: disable=invalid-name
+        """
+        Get the transmitted intensity values from all probes.
+
+        Returns:
+            A tuple of transmitted intensity values for all probes.
+        """
+        all_values = self.get_all_values()
+        transmitted_values = tuple(transmitted for _, transmitted, _ in all_values)
+        return transmitted_values
+
+    def ninety_deg(self) -> Tuple[float]: # pylint: disable=invalid-name
+        """
+        Get the 90 degree scattered intensity values from all probes.
+
+        Returns:
+            A tuple of 90 degree scattered intensity values for all probes.
+        """
+        all_values = self.get_all_values()
+        ninety_deg_values = tuple(ninety_deg for _, _, ninety_deg in all_values)
+        return ninety_deg_values

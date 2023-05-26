@@ -3,7 +3,15 @@ The aqueduct.core.socket_helpers module provides various helper functions for wo
 
 Functions:
 - string_to_bool(string: str) -> bool: Convert a string to a boolean value.
-- send_and_wait_for_rx(message: str, socket: socket.socket, lock: Union[threading.Lock, None], response: str, attempts: int = SOCKET_TX_ATTEMPTS, timeout: int = 5, size: int = 1024 * 8, delay_s: Union[None, float] = None) -> Tuple[bool, str]: Send a message over a socket and wait for a response.
+- send_and_wait_for_rx(message: str, 
+    socket: socket.socket, 
+    lock: Union[threading.Lock, None], 
+    response: str, 
+    attempts: int = SOCKET_TX_ATTEMPTS, 
+    timeout: int = 5, 
+    size: int = 1024 * 8, 
+    delay_s: Union[None, float] = None
+    ) -> Tuple[bool, str]: Send a message over a socket and wait for a response.
 
 """
 

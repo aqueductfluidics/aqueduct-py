@@ -1,3 +1,29 @@
+"""
+The `PressureTransducer` class represents a pressure transducer device 
+in the Aqueduct Fluidics ecosystem. The class inherits from the 
+base `Device` class and provides methods to interact with and control the pressure transducer device.
+
+Example usage:
+
+```python
+# Initialize the Aqueduct core application and the pressure transducer device
+aq = Aqueduct(user_id, ip_address, port)
+pressure_transducer = aq.devices.get("pressure_transducer")
+
+# Tare the pressure transducer
+pressure_transducer.tare()
+
+# Get a pressure reading from the pressure transducer
+pressure = pressure_transducer.get_value()
+
+# Get all pressure readings from the pressure transducer
+pressures = pressure_transducer.get_all_values()
+```
+
+The example demonstrates how to use the `PressureTransducer` class to perform 
+operations such as taring the pressure transducer, obtaining 
+a single pressure reading, and retrieving all pressure readings from the pressure transducer.
+"""
 from typing import Tuple, Union
 
 import aqueduct.devices.base.obj
@@ -5,22 +31,28 @@ from aqueduct.core.socket_constants import Actions
 
 
 class PressureTransducer(aqueduct.devices.base.obj.Device):
+    """Class representing a pressure transducer device.
+
+    This class represents a pressure transducer device, which can be used to measure pressure values.
+    Methods are provided to tare the device, read pressure values, and read all pressure values.
+
+    :ivar has_sim_values: Flag indicating whether the device has simulated values.
+    :type has_sim_values: bool
+    """
 
     def __init__(self, socket, socket_lock, **kwargs):
         super().__init__(socket, socket_lock, **kwargs)
         self.has_sim_values = True
 
     def tare(self, index: int = 0, record: Union[bool, None] = None):
-        """Send a tare command to one of the balance inputs.
+        """
+        Send a tare command to one of the pressure transducer inputs.
 
-        :Example: tare input 1 of the :class:`Balance` device named `balance`:
-
-        .. code-block:: python
-
-            balance.tare(input=1)
-
-        :param index: number-like value to specify the input of the balance to tare
+        :param index: The index of the pressure transducer input to tare.
         :type index: int
+
+        :param record: Optional parameter indicating whether to record the tare operation.
+        :type record: Union[bool, None]
         """
         commands = self.len * [None]
         commands[index] = 1
@@ -34,61 +66,35 @@ class PressureTransducer(aqueduct.devices.base.obj.Device):
 
     def value(self, index: int = 0):
         """
-        Get a weight value reading from one of the balance inputs. The *input_num* argument
-        selects the input channel to read.
+        Get a pressure value reading in Torr from one of the pressure transducer inputs.
 
-        If no valid input is present or the weight reading is invalid, returns `None`.
+        :param index: The index of the pressure transducer input to read from (0 is the first input).
+        :type index: int
 
-        :Example: read weight from input 0:
-
-        .. code-block:: python
-
-            balance.value(0)
-
-        :Example: read weight from input 3:
-
-        .. code-block:: python
-
-            balance.value(3)
-
-        :param index: input to read from, `0` is first input
-        :type index: int, {0:2}
-        :return: value, in weight
-        :rtype: float, None
+        :return: The pressure value in Torr.
+        :rtype: Union[float, None]
         """
         live = self.get_live()
         return live[index].get('v')
 
     def get_value(self, index: int = 0):
         """
-        Alias for the py:func:`value` method.
+        Alias for the `value` method.
 
-        :Example: read weight from input 3:
+        :param index: The index of the pressure transducer input to read from (0 is the first input).
+        :type index: int
 
-        .. code-block:: python
-
-            balance.get_value(3)
-
-        :param index: input to read from, `0` is first input
-        :type index: int, {0:2}
-        :return: value, in grams
-        :rtype: float, None
+        :return: The pressure value in torr.
+        :rtype: Union[float, None]
         """
         return self.value(index)
 
     def get_all_values(self) -> Tuple[float]:
         """
-        Get all of the weight readings from a Balance device.
+        Get all of the pressure readings from the pressure transducer device.
 
-        :Example: read all balances:
-
-        .. code-block:: python
-
-            weight_values = balance.get_all_values()
-            len(weights) # == balance.len
-
-        :return: weight values
-        :rtype: list
+        :return: The pressure values (in Torr) for all inputs as a tuple.
+        :rtype: Tuple[float]
         """
         live = self.get_live()
         values = []
@@ -97,7 +103,12 @@ class PressureTransducer(aqueduct.devices.base.obj.Device):
             values.append(ipt.get('v'))
         return tuple(values)
 
+    @property
+    def torr(self):
+        """
+        Get all pressure readings from the pressure transducer device in Torr.
 
-
-
-
+        :return: The pressure values for all inputs in Torr.
+        :rtype: Tuple[float]
+        """
+        return self.get_all_values()

@@ -17,7 +17,7 @@ aq = Aqueduct(params.user_id, params.ip_address, params.port)
 aq.initialize(params.init)
 
 # get the PinchValve device
-pinch_valve: PinchValve = aq.devices.get("PV000001")
+pinch_valve: PinchValve = aq.devices.get("pinch_valve_000001")
 
 # continuously cycle through opening and closing the valve
 while True:

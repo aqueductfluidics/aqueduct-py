@@ -18,7 +18,7 @@ aq.initialize(params.init)
 aq.set_command_delay(0.05)
 
 # get the peristaltic pump device and create a command object
-pump: PeristalticPump = aq.devices.get("MFPP000001")
+pump: PeristalticPump = aq.devices.get("peristaltic_pump_000001")
 commands = pump.make_commands()
 c = pump.make_start_command(
     mode=pump.MODE.Continuous,

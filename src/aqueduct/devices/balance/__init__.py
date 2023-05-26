@@ -93,3 +93,13 @@ class Balance(aqueduct.devices.base.obj.Device):
             ipt = live[i]
             values.append(ipt.get('g'))
         return tuple(values)
+
+    @property
+    def grams(self):
+        """
+        Get all weight readings from a balance device in grams.
+
+        :return: weight values for all inputs
+        :rtype: tuple of floats
+        """
+        return self.get_all_values()
