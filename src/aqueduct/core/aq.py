@@ -410,22 +410,22 @@ class Aqueduct:
 
     def pause_recipe(self):
         """Pauses the recipe associated with the current user ID."""
-        message = json.dumps(
-            [
-                SocketCommands.SocketMessage.value,
-                [Events.PAUSE_RECIPE.value, {"user_id": self._user_id}],
-            ]
-        ).encode()
+        if not self.is_local():
+            message = json.dumps(
+                [
+                    SocketCommands.SocketMessage.value,
+                    [Events.PAUSE_RECIPE.value, {"user_id": self._user_id}],
+                ]
+            ).encode()
 
-        self.send_and_wait_for_rx(
-            message,
-            Events.PAUSE_RECIPE.value,
-            SOCKET_TX_ATTEMPTS,
-        )
+            self.send_and_wait_for_rx(
+                message,
+                Events.PAUSE_RECIPE.value,
+                SOCKET_TX_ATTEMPTS,
+            )
 
-        if os.name != "nt":
-            process = psutil.Process(self._pid)
-            process.suspend()
+        process = psutil.Process(self._pid)
+        process.suspend()
 
     def update_process_status(self, status):
         """
@@ -621,7 +621,7 @@ class Aqueduct:
         :return: A new Prompt object
         :rtype: aqueduct.core.prompt.Prompt
         """
-        p = Prompt(message, timeout_s)
+        p = Prompt(message, timeout_s, pause_recipe)
         p.assign(self)
         message = json.dumps(
             [
@@ -678,6 +678,7 @@ class Aqueduct:
         ipt = Input(
             message=message,
             timeout_s=timeout_s,
+            pause_recipe=pause_recipe,
             input_type=input_type,
             options=options,
             rows=rows,

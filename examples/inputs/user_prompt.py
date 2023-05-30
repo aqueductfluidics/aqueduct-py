@@ -1,22 +1,32 @@
+"""
+User Prompt Demo
+
+This module demonstrates the usage of the Aqueduct library 
+for displaying prompts and controlling recipe execution
+with and without pausing. The demo shows how to use the 
+Aqueduct `prompt` function to display messages and control
+the recipe flow based on user input.
+
+The demo consists of two prompts. The first prompt (`testing with pause`)
+pauses the recipe execution until the user
+interacts with it, allowing the user to proceed by pressing a
+continue button. The second prompt (`testing without pause`)
+displays the message without pausing the recipe execution. 
+The demo also demonstrates how to use a while loop to wait
+for user input while the prompt is being displayed.
+"""
 import time
-import sys
-from pathlib import Path
+from aqueduct.core.aq import Aqueduct
 
-path = Path(__file__).parent.resolve().parent.resolve()
-sys.path.extend([str(path)])
+aq = Aqueduct()
+aq.initialize()
 
-import aqueduct.core.aq
-
-a = aqueduct.core.aq.Aqueduct(1)
-
-a.initialize()
-
-p = a.prompt(
+p = aq.prompt(
     message="testing with pause",
     pause_recipe=True,
 )
 
-p = a.prompt(
+p = aq.prompt(
     message="testing without pause",
     pause_recipe=False,
 )
@@ -24,5 +34,3 @@ p = a.prompt(
 while p:
     print("Waiting...")
     time.sleep(.1)
-
-

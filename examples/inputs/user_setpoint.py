@@ -1,18 +1,19 @@
 import time
 
-import aqueduct.core.aq
+from aqueduct.core.aq import Aqueduct
 
-a = aqueduct.core.aq.Aqueduct(1, port=49000)
+aq = Aqueduct()
+aq.initialize()
 
-a.initialize()
+aq.initialize()
 
-sf = a.setpoint(
+sf = aq.setpoint(
     name="testing_float",
     value=50,
     dtype=float.__name__,
 )
 
-sb = a.setpoint(
+sb = aq.setpoint(
     name="testing_bool",
     value=True,
     dtype=bool.__name__,

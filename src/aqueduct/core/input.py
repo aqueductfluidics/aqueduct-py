@@ -3,9 +3,8 @@ import time
 from enum import Enum
 from typing import Union
 
-
+from aqueduct.core.utils import send_and_wait_for_rx
 from aqueduct.core.socket_constants import (
-    SOCKET_DELAY_S,
     Events,
     SocketCommands,
 )
@@ -64,6 +63,7 @@ class Input(object):
     message = None
     timeout_s = None
     start_time = None
+    pause_recipe = False
     input_type = None
     options = []
     rows = []
@@ -76,6 +76,7 @@ class Input(object):
         self,
         message: str,
         timeout_s: Union[int, str],
+        pause_recipe: Union[bool, None],
         input_type: str = UserInputTypes.TEXT_INPUT.value,
         options: list = None,
         rows: list = None,
@@ -84,6 +85,9 @@ class Input(object):
         """
         Constructor method.
         """
+        if pause_recipe is None:
+            pause_recipe = False
+
         if options is None:
             options = []
 
@@ -93,6 +97,7 @@ class Input(object):
         self.start_time = time.monotonic_ns()
         self.message = message
         self.timeout_s = timeout_s
+        self.pause_recipe = pause_recipe
         self.input_type = input_type
         self.options = options
         self.rows = rows
@@ -133,6 +138,7 @@ class Input(object):
             message=self.message,
             timeout_s=self.timeout_s,
             start_time=self.start_time,
+            pause_recipe=self.pause_recipe,
             input_type=self.input_type,
             options=self.options,
             rows=self.rows,
@@ -156,17 +162,22 @@ class Input(object):
                     ],
                 ]
             ).encode()
-            self._aq.socket.settimeout(1)
-            with self._aq.socket_lock:
-                self._aq.socket.send(message)
-                time.sleep(SOCKET_DELAY_S)
-            data = self._aq.socket.recv(1024 * 8)
-            j = json.loads(data)
-            if j[0] == Events.GET_RECIPE_INPUT.value:
-                i = json.loads(j[1])
+
+            _, data = send_and_wait_for_rx(
+                message=message,
+                sock=self._aq.socket,
+                lock=self._aq.socket_lock,
+                response=Events.GET_RECIPE_INPUT.value,
+            )
+
+            try:
+                i = json.loads(data)
                 if i.get("input").get("value"):
                     return True
-            return False
+                else:
+                    return False
+            except json.decoder.JSONDecodeError:
+                return False
 
     def get_value(self, delete_if_set: bool = True):
         """
@@ -190,31 +201,25 @@ class Input(object):
                     ],
                 ]
             ).encode()
-            self._aq.socket.settimeout(1)
-            with self._aq.socket_lock:
-                self._aq.socket.send(message)
 
-            i = 0
-            while True:
-                data = self._aq.socket.recv(1024 * 8)
-                try:
-                    j = json.loads(data)
-                    if j[0] == Events.GET_RECIPE_INPUT_VALUE.value:
-                        v = json.loads(j[1])
-                        v = v.get("value")
-                        if self.dtype == float.__name__:
-                            return float(v)
-                        elif self.dtype == int.__name__:
-                            return int(v)
-                        else:
-                            return v
-                except BaseException as _e:
-                    continue
-                i += 1
-                if i > 10:
-                    break
+            _, data = send_and_wait_for_rx(
+                message=message,
+                sock=self._aq.socket,
+                lock=self._aq.socket_lock,
+                response=Events.GET_RECIPE_INPUT_VALUE.value,
+            )
 
-            return None
+            try:
+                v = json.loads(data)
+                v = v.get("value")
+                if self.dtype == float.__name__:
+                    return float(v)
+                elif self.dtype == int.__name__:
+                    return int(v)
+                else:
+                    return v
+            except BaseException as _e:
+                return None
 
     def to_json(self):
         """

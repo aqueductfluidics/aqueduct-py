@@ -2,8 +2,8 @@ import json
 import time
 from typing import Union
 
+from aqueduct.core.utils import send_and_wait_for_rx
 from aqueduct.core.socket_constants import (
-    SOCKET_DELAY_S,
     Events,
     SocketCommands,
 )
@@ -45,17 +45,22 @@ class Prompt:
     message = None
     timeout_s = None
     start_time = None
+    pause_recipe = False
 
     _delay_s = 0.5
     _aq: "aqueduct.core.aq.Aqueduct"
 
-    def __init__(self, message: str, timeout_s: Union[int, str]):
+    def __init__(self, message: str, timeout_s: Union[int, str], pause_recipe: Union[bool, None]):
         """
         Constructor method.
         """
+        if pause_recipe is None:
+            pause_recipe = False
+
         self.start_time = time.monotonic_ns()
         self.message = message
         self.timeout_s = timeout_s
+        self.pause_recipe = pause_recipe
 
     def __bool__(self):
         """
@@ -79,20 +84,21 @@ class Prompt:
                     ],
                 ]
             ).encode()
-            self._aq.socket.settimeout(1)
-            with self._aq.socket_lock:
-                self._aq.socket.send(message)
-                time.sleep(SOCKET_DELAY_S)
-            data = self._aq.socket.recv(1024 * 8)
-            j = json.loads(data)
-            if j[0] == Events.GET_RECIPE_PROMPT.value:
-                try:
-                    i = json.loads(j[1])
-                    if i.get("prompt"):
-                        return True
-                except json.decoder.JSONDecodeError:
-                    if j[1] == "ack":
-                        return False
+
+            _, data = send_and_wait_for_rx(
+                message=message,
+                sock=self._aq.socket,
+                lock=self._aq.socket_lock,
+                response=Events.GET_RECIPE_PROMPT.value,
+            )
+
+            try:
+                i = json.loads(data)
+                if i.get("prompt"):
+                    return True
+            except json.decoder.JSONDecodeError:
+                if data == "ack":
+                    return False
 
     def serialize(self):
         """
@@ -102,7 +108,10 @@ class Prompt:
             dict: a dictionary of the prompt object.
         """
         return dict(
-            message=self.message, timeout_s=self.timeout_s, start_time=self.start_time
+            message=self.message,
+            timeout_s=self.timeout_s,
+            start_time=self.start_time,
+            pause_recipe=self.pause_recipe
         )
 
     def assign(self, aq: "aqueduct.core.aq.Aqueduct"):
