@@ -25,6 +25,8 @@ Attributes:
     _address (str): The IP address of the Aqueduct server.
     _port (int): The port number of the Aqueduct server.
     _debug (bool): Whether debugging is enabled.
+    _pause_on_queue (bool): Whether to pause on queue.
+    _serial_number (Union[int, None]): The serial number of the Aqueduct instance.
 
 """
 
@@ -166,6 +168,8 @@ class Aqueduct:
         _address (str): The IP address of the Aqueduct server.
         _port (int): The port number of the Aqueduct server.
         _debug (bool): Whether debugging is enabled.
+        _pause_on_queue (bool): Whether to pause on queue.
+        _serial_number (Union[int, None]): The serial number of the Aqueduct instance.
 
     """
     devices: dict
@@ -182,6 +186,7 @@ class Aqueduct:
     _port: int
     _debug: bool = False
     _pause_on_queue: bool = False
+    _serial_number: typing.Union[int, None] = None
 
     def __init__(
         self,
@@ -223,6 +228,9 @@ class Aqueduct:
         self._address = address
         self._port = port
         self._pause_on_queue = pause
+
+        if os.environ.get('AQ_SERIAL_NUMBER') is not None:
+            self._serial_number = int(os.environ.get('AQ_SERIAL_NUMBER'))
 
         self.devices: dict = {}
 
@@ -284,6 +292,15 @@ class Aqueduct:
         :return: boolean.
         """
         return self.user_id == "L"
+
+    @property
+    def serial_number(self) -> typing.Union[int, None]:
+        """
+        Returns the user ID.
+
+        :return: An integer representing the user ID.
+        """
+        return self._serial_number
 
     def send_and_wait_for_rx(
         self,

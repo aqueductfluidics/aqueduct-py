@@ -464,12 +464,7 @@ class SyringePump(Device):
         :return: uL/min
         :rtype: Tuple[float]
         """
-        live = self.get_live()
-        values = []
-        for i in range(0, self.len):
-            ipt = live[i]
-            values.append(ipt.get("um"))
-        return tuple(values)
+        return self.extract_live_as_tuple("um")
 
     def get_status(self) -> Tuple[Status]:
         """
@@ -486,13 +481,8 @@ class SyringePump(Device):
         :return: status
         :rtype: Tuple[Status]
         """
-        live = self.get_live()
-        values = []
-        for i in range(0, self.len):
-            ipt = live[i]
-            s = ipt.get("s")
-            values.append(Status(int(s)))
-        return tuple(values)
+        cast_function = lambda s: Status(int(s))
+        return self.extract_live_as_tuple("s", cast_function)
 
     def get_active(self) -> Tuple[bool]:
         """
@@ -509,10 +499,5 @@ class SyringePump(Device):
         :return: active
         :rtype: Tuple[bool]
         """
-        live = self.get_live()
-        values = []
-        for i in range(0, self.len):
-            ipt = live[i]
-            s = ipt.get("s")
-            values.append(s in (Status.Infusing, Status.Withdrawing))
-        return tuple(values)
+        cast_function = lambda s: s in (Status.Infusing, Status.Withdrawing)
+        return self.extract_live_as_tuple("s", cast_function)

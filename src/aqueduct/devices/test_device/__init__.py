@@ -4,8 +4,7 @@ import aqueduct.devices.base.obj
 
 
 class TestDevice(aqueduct.devices.base.obj.Device):
-    def __init__(self, socket, socket_lock, **kwargs):
-        super().__init__(socket, socket_lock, **kwargs)
+    """TestDevice class."""
 
     def set_roc(self, roc: List[int], record: Union[None, bool] = None):
         """
@@ -36,9 +35,4 @@ class TestDevice(aqueduct.devices.base.obj.Device):
         :return: weight values
         :rtype: list
         """
-        data = self.get()
-        values = []
-        for i in range(0, self.len):
-            ipt = data.get("live")[i]
-            values.append(ipt.get("v"))
-        return tuple(values)
+        return self.extract_live_as_tuple("v")

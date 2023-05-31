@@ -1,12 +1,14 @@
 """Device object base class."""
 
+from __future__ import annotations
+
 import json
 import threading
 import socket
 import time
 import enum
 
-from typing import Union, List, Tuple
+from typing import Union, List, Tuple, TypeVar, Callable
 from abc import ABC, abstractmethod
 
 from aqueduct.core.socket_constants import (
@@ -153,17 +155,17 @@ class Device:
     def command_delay(self) -> float:
         """Return the command delay (in seconds)."""
         return self._command_delay
-    
+
     @command_delay.setter
     def command_delay(self, value: float):
         """Set the command delay (in seconds)."""
         self._command_delay = value
-    
+
     @property
     def has_sim_values(self) -> float:
         """Return whether the Device has `simmable` values."""
         return self._has_sim_values
-    
+
     @has_sim_values.setter
     def has_sim_values(self, value: bool):
         """Set whether the Device has simulated values."""
@@ -181,7 +183,7 @@ class Device:
         """
         commands = [c.to_command() if c is not None else None for c in commands]
         return commands
-    
+
     def set_command(
         self,
         commands: List[Union[Command, None]],
@@ -199,9 +201,9 @@ class Device:
                 "SetCommand error: command index larger than device size!")
 
     def to_payload(
-        self, 
-        action: Actions, 
-        command: dict, 
+        self,
+        action: Actions,
+        command: dict,
         record: Union[bool, None] = None
     ) -> CommandPayload:
         """Generate an `Action` payload."""
@@ -221,7 +223,8 @@ class Device:
             payload = payload.to_dict()
 
         message = json.dumps(
-            [SocketCommands.SocketMessage.value, [Events.DEVICE_ACTION.value, payload]]
+            [SocketCommands.SocketMessage.value, [
+                Events.DEVICE_ACTION.value, payload]]
         ).encode()
 
         return send_and_wait_for_rx(
@@ -232,7 +235,7 @@ class Device:
             SOCKET_TX_ATTEMPTS,
             delay_s=self.command_delay,
         )
-    
+
     def make_commands(self) -> List[None]:
         """Helper method to create an empty list with the length of the Device.
 
@@ -252,7 +255,8 @@ class Device:
         """Get the device data from the TCP socket."""
         payload = self.generate_action_payload()
         message = json.dumps(
-            [SocketCommands.SocketMessage.value, [Events.GET_DEVICE.value, payload]]
+            [SocketCommands.SocketMessage.value, [
+                Events.GET_DEVICE.value, payload]]
         ).encode()
         i = 0
         while i < SOCKET_TX_ATTEMPTS:
@@ -298,17 +302,65 @@ class Device:
                 continue
             i += 1
 
+    T = TypeVar("T")
+
+    def extract_live_as_tuple(
+            self,
+            key: str,
+            cast: Callable[[str], T] = None
+    ) -> tuple[T]:
+        """
+        Extracts a specific key from the live data and returns it as a tuple.
+
+        :param key: The key to extract from the live data.
+        :type key: str
+        :param cast: Optional type to cast the extracted values.
+        :type cast: type, optional
+        :return: The extracted values as a tuple.
+        :rtype: tuple
+        """
+        live = self.get_live()
+        values = []
+        for i in range(0, self.len):
+            ipt = live[i]
+            value = ipt.get(key)
+            if cast is not None:
+                value = cast(value)
+            values.append(value)
+        return tuple(values)
+
+    def extract_live_as_tuple_of_tuples(
+        self, keys: Tuple[str], cast: Callable[[str], T] = None
+    ) -> Tuple[Tuple[T]]:
+        """
+        Extracts multiple keys from the live data and returns them as a tuple of tuples.
+
+        :param keys: The keys to extract from the live data.
+        :type keys: Tuple[str]
+        :param cast: Optional lambda function to cast the extracted values.
+        :type cast: Callable[[str], T], optional
+        :return: The extracted values as a tuple of tuples.
+        :rtype: Tuple[Tuple[T]]
+        """
+        live = self.get_live()
+        values = []
+        for i in range(0, self.len):
+            ipt = live[i]
+            extracted_values = []
+            for key in keys:
+                value = ipt.get(key)
+                if cast is not None:
+                    value = cast(value)
+                extracted_values.append(value)
+            values.append(tuple(extracted_values))
+        return tuple(values)
+
     def update_record(self, record: bool):
-        """Toggle whether the PH3 device is recording.
+        """
+        Updates the record status of the device.
 
-        :Example: Start recording data for the PH3 device named PH3SIM:
-
-        .. code-block:: python
-
-            PH3SIM.update_record(True)
-
-        :return: command dictionary
-        :rtype: dict
+        :param record: The record status.
+        :type record: bool
         """
         payload = self.to_payload(Actions.UpdateRecord, None, record)
         self.send_command(payload)
@@ -339,6 +391,17 @@ class Device:
         roc: Union[tuple, list],
         noise: Union[tuple, list],
     ):
+        """
+        Sets the simulated data for the device.
+
+        :param values: The simulated values.
+        :type values: Union[tuple, list]
+        :param roc: The rates of change for the simulated values.
+        :type roc: Union[tuple, list]
+        :param noise: The noise values for the simulated data.
+        :type noise: Union[tuple, list]
+        :raises Warning: If the device does not have simulated values.
+        """
         if self.has_sim_values:
             v_t = []
             for i in range(0, self.len):
@@ -358,11 +421,18 @@ class Device:
 
             payload = self.to_payload(Actions.SetSimValues, v_t, None)
             self.send_command(payload)
-        
+
         else:
             raise Warning(f"{self.name} does not have simulated values.")
 
     def set_sim_values(self, values: Union[tuple, list]):
+        """
+        Sets the simulated values for the device.
+
+        :param values: The simulated values.
+        :type values: Union[tuple, list]
+        :raises Warning: If the device does not have simulated values.
+        """
         if self.has_sim_values:
             v_t = []
             for i in range(0, self.len):
@@ -374,14 +444,21 @@ class Device:
 
             payload = self.to_payload(Actions.SetSimValues, v_t, None)
             self.send_command(payload)
-        
+
         else:
             raise Warning(f"{self.name} does not have simulated values.")
 
     def set_sim_rates_of_change(self, roc: Union[tuple, list]):
+        """
+        Sets the rates of change for the simulated values.
+
+        :param roc: The rates of change for the simulated values.
+        :type roc: Union[tuple, list]
+        :raises Warning: If the device does not have simulated values.
+        """
         if self.has_sim_values:
             v_t = []
-            for i in range(0,self.len):
+            for i in range(0, self.len):
                 try:
                     r_c = roc[i]
                 except IndexError:
@@ -390,14 +467,21 @@ class Device:
 
             payload = self.to_payload(Actions.SetSimValues, v_t, None)
             self.send_command(payload)
-        
+
         else:
             raise Warning(f"{self.name} does not have simulated values.")
 
     def set_sim_noise(self, noise: Union[tuple, list]):
+        """
+        Sets the noise values for the simulated data.
+
+        :param noise: The noise values for the simulated data.
+        :type noise: Union[tuple, list]
+        :raises Warning: If the device does not have simulated values.
+        """
         if self.has_sim_values:
             v_t = []
-            for i in range(0,self.len):
+            for i in range(0, self.len):
                 try:
                     n_v = noise[i]
                 except IndexError:

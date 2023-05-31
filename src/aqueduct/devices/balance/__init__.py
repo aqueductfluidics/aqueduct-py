@@ -65,9 +65,7 @@ class Balance(aqueduct.devices.base.obj.Device):
         :return: value, in grams
         :rtype: float or None
         """
-
-        live = self.get_live()
-        return live[index].get('g')
+        return self.get_all_values()[index]
 
     def get_value(self, index: int = 0):
         """
@@ -87,12 +85,7 @@ class Balance(aqueduct.devices.base.obj.Device):
         :return: weight values for all inputs
         :rtype: tuple of floats
         """
-        live = self.get_live()
-        values = []
-        for i in range(0, self.len):
-            ipt = live[i]
-            values.append(ipt.get('g'))
-        return tuple(values)
+        return self.extract_live_as_tuple("g")
 
     @property
     def grams(self):

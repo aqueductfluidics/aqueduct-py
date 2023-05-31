@@ -52,9 +52,7 @@ class PhProbe(Device):
         :return: The pH value at the specified index.
         :rtype: float
         """
-
-        live = self.get_live()
-        return live[index].get('v')
+        return self.get_all_values()[index]
 
     def get_value(self, index: int = 0) -> float:
         """
@@ -75,13 +73,7 @@ class PhProbe(Device):
         :return: A tuple of pH values.
         :rtype: tuple[float]
         """
-
-        live = self.get_live()
-        values = []
-        for i in range(0, self.len):
-            ipt = live[i]
-            values.append(ipt.get('v'))
-        return tuple(values)
+        return self.extract_live_as_tuple("v")
 
     @property
     def ph(self): # pylint: disable=invalid-name

@@ -290,9 +290,4 @@ class PeristalticPump(Device):
         :return: weight values
         :rtype: list
         """
-        live = self.get_live()
-        values = []
-        for i in range(0, self.len):
-            ipt = live[i]
-            values.append(ipt.get('mm'))
-        return tuple(values)
+        return self.extract_live_as_tuple("mm")

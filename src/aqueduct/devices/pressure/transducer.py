@@ -74,8 +74,7 @@ class PressureTransducer(aqueduct.devices.base.obj.Device):
         :return: The pressure value in Torr.
         :rtype: Union[float, None]
         """
-        live = self.get_live()
-        return live[index].get('v')
+        return self.get_all_values()[index]
 
     def get_value(self, index: int = 0):
         """
@@ -96,12 +95,7 @@ class PressureTransducer(aqueduct.devices.base.obj.Device):
         :return: The pressure values (in Torr) for all inputs as a tuple.
         :rtype: Tuple[float]
         """
-        live = self.get_live()
-        values = []
-        for i in range(0, self.len):
-            ipt = live[i]
-            values.append(ipt.get('v'))
-        return tuple(values)
+        return self.extract_live_as_tuple("v")
 
     @property
     def torr(self):

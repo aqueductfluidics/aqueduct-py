@@ -75,14 +75,7 @@ class OpticalDensityProbe(aqueduct.devices.base.obj.Device):
             A tuple of tuples, where each inner tuple contains the optical density, transmitted, and 90 degree
             scattered intensity values, respectively, for a single probe.
         """
-        live = self.get_live()
-        values = []
-        for i in range(self.len):
-            od = live[i].get('od')
-            transmitted = live[i].get('t')
-            ninety_deg = live[i].get('n')
-            values.append((od, transmitted, ninety_deg))
-        return tuple(values)
+        return self.extract_live_as_tuple_of_tuples(("od", "t", "n"))
     
     @property
     def optical_density(self) -> Tuple[float]: # pylint: disable=invalid-name
