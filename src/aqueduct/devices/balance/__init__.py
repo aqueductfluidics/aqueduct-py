@@ -23,6 +23,7 @@ from typing import Tuple, Union
 
 import aqueduct.devices.base.obj
 from aqueduct.core.socket_constants import Actions
+from aqueduct.core.units import WeightUnits, convert_weight_values
 
 
 class Balance(aqueduct.devices.base.obj.Device):
@@ -88,11 +89,51 @@ class Balance(aqueduct.devices.base.obj.Device):
         return self.extract_live_as_tuple("g")
 
     @property
-    def grams(self):
+    def grams(self) -> Tuple[float]:
         """
         Get all weight readings from a balance device in grams.
 
-        :return: weight values for all inputs
-        :rtype: tuple of floats
+        :return: The weight values for all inputs in grams.
+        :rtype: Tuple[float]
         """
         return self.get_all_values()
+
+    @property
+    def kilograms(self) -> Tuple[float]:
+        """
+        Get all weight readings from a balance device in kilograms.
+
+        :return: The weight values for all inputs in kilograms.
+        :rtype: Tuple[float]
+        """
+        return convert_weight_values(self.grams, WeightUnits.GRAMS, WeightUnits.KILOGRAMS)
+
+    @property
+    def pounds(self) -> Tuple[float]:
+        """
+        Get all weight readings from a balance device in pounds.
+
+        :return: The weight values for all inputs in pounds.
+        :rtype: Tuple[float]
+        """
+        return convert_weight_values(self.grams, WeightUnits.GRAMS, WeightUnits.POUNDS)
+
+    @property
+    def newtons(self) -> Tuple[float]:
+        """
+        Get all weight readings from a balance device in newtons.
+
+        :return: The weight values for all inputs in newtons.
+        :rtype: Tuple[float]
+        """
+        return convert_weight_values(self.grams, WeightUnits.GRAMS, WeightUnits.NEWTONS)
+
+    @property
+    def ounces(self) -> Tuple[float]:
+        """
+        Get all weight readings from a balance device in ounces.
+
+        :return: The weight values for all inputs in ounces.
+        :rtype: Tuple[float]
+        """
+        return convert_weight_values(self.grams, WeightUnits.GRAMS, WeightUnits.OUNCES)

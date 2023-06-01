@@ -28,6 +28,7 @@ from typing import Tuple, Union
 
 import aqueduct.devices.base.obj
 from aqueduct.core.socket_constants import Actions
+from aqueduct.core.units import PressureUnits, convert_pressure_values
 
 
 class PressureTransducer(aqueduct.devices.base.obj.Device):
@@ -92,7 +93,7 @@ class PressureTransducer(aqueduct.devices.base.obj.Device):
         """
         Get all of the pressure readings from the pressure transducer device.
 
-        :return: The pressure values (in Torr) for all inputs as a tuple.
+        :return: The pressure values (in torr) for all inputs as a tuple.
         :rtype: Tuple[float]
         """
         return self.extract_live_as_tuple("v")
@@ -100,9 +101,49 @@ class PressureTransducer(aqueduct.devices.base.obj.Device):
     @property
     def torr(self):
         """
-        Get all pressure readings from the pressure transducer device in Torr.
+        Get all pressure readings from the pressure transducer device in torr.
 
-        :return: The pressure values for all inputs in Torr.
+        :return: The pressure values for all inputs in torr.
         :rtype: Tuple[float]
         """
         return self.get_all_values()
+
+    @property
+    def psi(self):
+        """
+        Get all pressure readings from the pressure transducer device in psi.
+
+        :return: The pressure values for all inputs in psi.
+        :rtype: Tuple[float]
+        """
+        return convert_pressure_values(self.torr, PressureUnits.TORR, PressureUnits.PSI)
+    
+    @property
+    def atm(self):
+        """
+        Get all pressure readings from the pressure transducer device in atmospheres.
+
+        :return: The pressure values for all inputs in atmospheres.
+        :rtype: Tuple[float]
+        """
+        return convert_pressure_values(self.torr, PressureUnits.TORR, PressureUnits.ATMOSPHERE_STD)
+    
+    @property
+    def pascal(self):
+        """
+        Get all pressure readings from the pressure transducer device in pascals.
+
+        :return: The pressure values for all inputs in pascals.
+        :rtype: Tuple[float]
+        """
+        return convert_pressure_values(self.torr, PressureUnits.TORR, PressureUnits.PASCAL)
+    
+    @property
+    def bar(self):
+        """
+        Get all pressure readings from the pressure transducer device in bar.
+
+        :return: The pressure values for all inputs in bar.
+        :rtype: Tuple[float]
+        """
+        return convert_pressure_values(self.torr, PressureUnits.TORR, PressureUnits.BAR)
