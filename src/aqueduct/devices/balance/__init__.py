@@ -1,6 +1,6 @@
 """
-The `Balance` class represents a balance device in the Aqueduct Fluidics 
-ecosystem. The `Balance` class inherits from the base `Device` class and 
+The `Balance` class represents a balance device in the Aqueduct Fluidics
+ecosystem. The `Balance` class inherits from the base `Device` class and
 provides methods to interact with and control the balance device.
 
 Example usage:
@@ -19,11 +19,15 @@ Example usage:
     weights = balance.get_all_values()
 
 """
-from typing import Tuple, Union
+from typing import List
+from typing import Tuple
+from typing import Union
 
 import aqueduct.devices.base.obj
 from aqueduct.core.socket_constants import Actions
-from aqueduct.core.units import WeightUnits, convert_weight_values
+from aqueduct.core.units import convert_weight_values
+from aqueduct.core.units import get_weight_conversion
+from aqueduct.core.units import WeightUnits
 
 
 class Balance(aqueduct.devices.base.obj.Device):
@@ -50,11 +54,7 @@ class Balance(aqueduct.devices.base.obj.Device):
         commands = self.len * [None]
         commands[index] = 1
 
-        payload = self.to_payload(
-            Actions.Tare,
-            {"commands": commands},
-            record
-        )
+        payload = self.to_payload(Actions.Tare, {"commands": commands}, record)
         self.send_command(payload)
 
     def value(self, index: int = 0):
@@ -106,7 +106,9 @@ class Balance(aqueduct.devices.base.obj.Device):
         :return: The weight values for all inputs in kilograms.
         :rtype: Tuple[float]
         """
-        return convert_weight_values(self.grams, WeightUnits.GRAMS, WeightUnits.KILOGRAMS)
+        return convert_weight_values(
+            self.grams, WeightUnits.GRAMS, WeightUnits.KILOGRAMS
+        )
 
     @property
     def pounds(self) -> Tuple[float]:
@@ -137,3 +139,70 @@ class Balance(aqueduct.devices.base.obj.Device):
         :rtype: Tuple[float]
         """
         return convert_weight_values(self.grams, WeightUnits.GRAMS, WeightUnits.OUNCES)
+
+    def set_sim_data(
+        self,
+        values: Union[List[Union[float, None]], tuple, None],
+        roc: Union[List[Union[float, None]], tuple, None],
+        noise: Union[List[Union[float, None]], tuple, None],
+        units: WeightUnits = WeightUnits.GRAMS,
+    ):
+        """
+        Sets the simulated data for the balance.
+
+        :param values: The simulated values.
+        :type values: Union[List[Union[float, None]], Tuple]
+        :param roc: The rates of change for the simulated values.
+        :type roc: Union[List[Union[float, None]], Tuple]
+        :param noise: The noise values for the simulated data.
+        :type noise: Union[List[Union[float, None]], Tuple]
+        :param units: The units for the simulated data. Default is WeightUnits.GRAMS.
+        :type units: WeightUnits
+        """
+        scale = 1.0 / get_weight_conversion(WeightUnits.GRAMS, units)
+        self._set_sim_data(values, roc, noise, scale)
+
+    def set_sim_values(
+        self,
+        values: Union[List[Union[float, None]], tuple],
+        units: WeightUnits = WeightUnits.GRAMS,
+    ):
+        """
+        Sets the simulated values for the balance.
+
+        :param values: The simulated values.
+        :type values: Union[List[Union[float, None]], Tuple]
+        :param units: The units for the simulated values. Default is WeightUnits.GRAMS.
+        :type units: WeightUnits
+        """
+        self.set_sim_data(values=values, roc=None, noise=None, units=units)
+
+    def set_sim_rates_of_change(
+        self,
+        roc: Union[List[Union[float, None]], tuple],
+        units: WeightUnits = WeightUnits.GRAMS,
+    ):
+        """
+        Sets the rates of change for the simulated values of the balance.
+
+        :param roc: The rates of change for the simulated values.
+        :type roc: Union[List[Union[float, None]], Tuple]
+        :param units: The units of the input values.
+        :type units: WeightUnits
+        """
+        self.set_sim_data(values=None, roc=roc, noise=None, units=units)
+
+    def set_sim_noise(
+        self,
+        noise: Union[List[Union[float, None]], tuple],
+        units: WeightUnits = WeightUnits.GRAMS,
+    ):
+        """
+        Sets the noise values for the simulated data of the balance.
+
+        :param noise: The noise values for the simulated data.
+        :type noise: Union[List[Union[float, None]], Tuple]
+        :param units: The units for the simulated data. Default is WeightUnits.GRAMS.
+        :type units: WeightUnits
+        """
+        self.set_sim_data(values=None, roc=None, noise=noise, units=units)

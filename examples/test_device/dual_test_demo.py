@@ -1,5 +1,3 @@
-import aqueduct
-
 import aqueduct.core.aq
 import aqueduct.devices.test_device
 

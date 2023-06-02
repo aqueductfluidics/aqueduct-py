@@ -1,10 +1,8 @@
 import pytest
-
 from aqueduct.devices.pump.syringe import Status
 
 
 class TestSyringePump:
-
     def test_int_to_status(self) -> None:
         s = Status.Infusing.value
         assert s == 1

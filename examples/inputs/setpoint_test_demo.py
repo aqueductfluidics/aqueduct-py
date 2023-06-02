@@ -31,4 +31,4 @@ while True:
         test1.set_roc(roc=[r0, r1])
     v1 = test1.get_all_values()
     print(v1)
-    time.sleep(.5)
+    time.sleep(0.5)

@@ -1,23 +1,21 @@
 """Device object base class."""
-
 from __future__ import annotations
 
-import json
-import threading
-import socket
-import time
 import enum
+import json
+import socket
+import threading
+import time
+from abc import ABC
+from abc import abstractmethod
+from typing import Callable
+from typing import TypeVar
 
-from typing import Union, List, Tuple, TypeVar, Callable
-from abc import ABC, abstractmethod
-
-from aqueduct.core.socket_constants import (
-    SOCKET_DELAY_S,
-    SOCKET_TX_ATTEMPTS,
-    SocketCommands,
-    Events,
-    Actions,
-)
+from aqueduct.core.socket_constants import Actions
+from aqueduct.core.socket_constants import Events
+from aqueduct.core.socket_constants import SOCKET_DELAY_S
+from aqueduct.core.socket_constants import SOCKET_TX_ATTEMPTS
+from aqueduct.core.socket_constants import SocketCommands
 from aqueduct.core.utils import send_and_wait_for_rx
 
 
@@ -67,27 +65,28 @@ class Command(ABC):
     :ivar direction: the pump's direction (e.g. "clockwise" or "counterclockwise")
     :vartype direction: str
     """
+
     @abstractmethod
-    def to_command(self) -> Tuple:
+    def to_command(self) -> tuple:
         pass
 
 
 class CommandPayload:
     """Payload genertor for Device Actions."""
 
-    user_id: Union[str, int]
+    user_id: str | int
     device_id: int
     action: Actions
     command: dict
-    record: Union[bool, None]
+    record: bool | None
 
     def __init__(
         self,
-        user_id: Union[str, int],
+        user_id: str | int,
         device_id: int,
         action: Actions,
         command: dict,
-        record: Union[bool, None],
+        record: bool | None,
     ):
         self.user_id = user_id
         self.device_id = device_id
@@ -171,7 +170,7 @@ class Device:
         """Set whether the Device has simulated values."""
         self._has_sim_values = value
 
-    def map_commands(self, commands: List[Union[Command, None]]) -> List:
+    def map_commands(self, commands: list[Command | None]) -> list:
         """
         Abstract method to return the command as a List of bytes.
 
@@ -186,7 +185,7 @@ class Device:
 
     def set_command(
         self,
-        commands: List[Union[Command, None]],
+        commands: list[Command | None],
         index: int,
         command: Command,
     ):
@@ -197,14 +196,10 @@ class Device:
         if index < len(commands):
             commands[index] = command
         else:
-            raise Warning(
-                "SetCommand error: command index larger than device size!")
+            raise Warning("SetCommand error: command index larger than device size!")
 
     def to_payload(
-        self,
-        action: Actions,
-        command: dict,
-        record: Union[bool, None] = None
+        self, action: Actions, command: dict, record: bool | None = None
     ) -> CommandPayload:
         """Generate an `Action` payload."""
         return CommandPayload(self._user_id, self._device_id, action, command, record)
@@ -217,14 +212,13 @@ class Device:
             "action": None,
         }
 
-    def send_command(self, payload: Union[dict, CommandPayload]):
+    def send_command(self, payload: dict | CommandPayload):
         """Send a `Command` to the TCP Socket."""
         if isinstance(payload, CommandPayload):
             payload = payload.to_dict()
 
         message = json.dumps(
-            [SocketCommands.SocketMessage.value, [
-                Events.DEVICE_ACTION.value, payload]]
+            [SocketCommands.SocketMessage.value, [Events.DEVICE_ACTION.value, payload]]
         ).encode()
 
         return send_and_wait_for_rx(
@@ -236,7 +230,7 @@ class Device:
             delay_s=self.command_delay,
         )
 
-    def make_commands(self) -> List[None]:
+    def make_commands(self) -> list[None]:
         """Helper method to create an empty list with the length of the Device.
 
         :return: commands
@@ -255,8 +249,7 @@ class Device:
         """Get the device data from the TCP socket."""
         payload = self.generate_action_payload()
         message = json.dumps(
-            [SocketCommands.SocketMessage.value, [
-                Events.GET_DEVICE.value, payload]]
+            [SocketCommands.SocketMessage.value, [Events.GET_DEVICE.value, payload]]
         ).encode()
         i = 0
         while i < SOCKET_TX_ATTEMPTS:
@@ -305,9 +298,7 @@ class Device:
     T = TypeVar("T")
 
     def extract_live_as_tuple(
-            self,
-            key: str,
-            cast: Callable[[str], T] = None
+        self, key: str, cast: Callable[[str], T] = None
     ) -> tuple[T]:
         """
         Extracts a specific key from the live data and returns it as a tuple.
@@ -330,8 +321,8 @@ class Device:
         return tuple(values)
 
     def extract_live_as_tuple_of_tuples(
-        self, keys: Tuple[str], cast: Callable[[str], T] = None
-    ) -> Tuple[Tuple[T]]:
+        self, keys: tuple[str], cast: Callable[[str], T] = None
+    ) -> tuple[tuple[T]]:
         """
         Extracts multiple keys from the live data and returns them as a tuple of tuples.
 
@@ -385,38 +376,44 @@ class Device:
             delay_s=self.command_delay,
         )
 
-    def set_sim_data(
+    def _set_sim_data(
         self,
-        values: Union[tuple, list],
-        roc: Union[tuple, list],
-        noise: Union[tuple, list],
+        values: list[float | None] | tuple | None,
+        roc: list[float | None] | tuple | None,
+        noise: list[float | None] | tuple | None,
+        scale: float = 1.0,
     ):
         """
         Sets the simulated data for the device.
 
         :param values: The simulated values.
-        :type values: Union[tuple, list]
+        :type values: list[float | None] | tuple | None
         :param roc: The rates of change for the simulated values.
-        :type roc: Union[tuple, list]
+        :type roc: list[float | None] | tuple | None
         :param noise: The noise values for the simulated data.
-        :type noise: Union[tuple, list]
+        :type noise: list[float | None] | tuple | None
+        :param scale: Optional scaling factor for unit conversion. Default is 1.0.
+        :type scale: float, optional
         :raises Warning: If the device does not have simulated values.
         """
         if self.has_sim_values:
             v_t = []
             for i in range(0, self.len):
-                try:
-                    v_v = values[i]
-                except IndexError:
-                    v_v = None
-                try:
-                    r_c = roc[i]
-                except IndexError:
-                    r_c = None
-                try:
-                    n_v = noise[i]
-                except IndexError:
-                    n_v = None
+                v_v = (
+                    values[i] * scale
+                    if values and i < len(values) and values[i] is not None
+                    else None
+                )
+                r_c = (
+                    roc[i] * scale
+                    if roc and i < len(roc) and roc[i] is not None
+                    else None
+                )
+                n_v = (
+                    noise[i] * scale
+                    if noise and i < len(noise) and noise[i] is not None
+                    else None
+                )
                 v_t.append((v_v, r_c, n_v))
 
             payload = self.to_payload(Actions.SetSimValues, v_t, None)
@@ -425,71 +422,40 @@ class Device:
         else:
             raise Warning(f"{self.name} does not have simulated values.")
 
-    def set_sim_values(self, values: Union[tuple, list]):
+    def _set_sim_values(self, values: list[float | None] | tuple, scale: float = 1.0):
         """
         Sets the simulated values for the device.
 
         :param values: The simulated values.
-        :type values: Union[tuple, list]
+        :type values: list[float | None] | tuple
+        :param scale: Optional scaling factor for unit conversion. Default is 1.0.
+        :type scale: float, optional
         :raises Warning: If the device does not have simulated values.
         """
-        if self.has_sim_values:
-            v_t = []
-            for i in range(0, self.len):
-                try:
-                    v_v = values[i]
-                except IndexError:
-                    v_v = None
-                v_t.append((v_v, None, None))
+        self._set_sim_data(values=values, roc=None, noise=None, scale=scale)
 
-            payload = self.to_payload(Actions.SetSimValues, v_t, None)
-            self.send_command(payload)
-
-        else:
-            raise Warning(f"{self.name} does not have simulated values.")
-
-    def set_sim_rates_of_change(self, roc: Union[tuple, list]):
+    def _set_sim_rates_of_change(
+        self, roc: list[float | None] | tuple, scale: float = 1.0
+    ):
         """
         Sets the rates of change for the simulated values.
 
         :param roc: The rates of change for the simulated values.
-        :type roc: Union[tuple, list]
+        :type roc: list[float | None] | tuple
+        :param scale: Optional scaling factor for unit conversion. Default is 1.0.
+        :type scale: float, optional
         :raises Warning: If the device does not have simulated values.
         """
-        if self.has_sim_values:
-            v_t = []
-            for i in range(0, self.len):
-                try:
-                    r_c = roc[i]
-                except IndexError:
-                    r_c = None
-                v_t.append((None, r_c, None))
+        self._set_sim_data(values=None, roc=roc, noise=None, scale=scale)
 
-            payload = self.to_payload(Actions.SetSimValues, v_t, None)
-            self.send_command(payload)
-
-        else:
-            raise Warning(f"{self.name} does not have simulated values.")
-
-    def set_sim_noise(self, noise: Union[tuple, list]):
+    def _set_sim_noise(self, noise: list[float | None] | tuple, scale: float = 1.0):
         """
         Sets the noise values for the simulated data.
 
         :param noise: The noise values for the simulated data.
-        :type noise: Union[tuple, list]
+        :type noise: list[float | None] | tuple
+        :param scale: Optional scaling factor for unit conversion. Default is 1.0.
+        :type scale: float, optional
         :raises Warning: If the device does not have simulated values.
         """
-        if self.has_sim_values:
-            v_t = []
-            for i in range(0, self.len):
-                try:
-                    n_v = noise[i]
-                except IndexError:
-                    n_v = None
-                v_t.append((None, None, n_v))
-
-            payload = self.to_payload(Actions.SetSimValues, v_t, None)
-            self.send_command(payload)
-
-        else:
-            raise Warning(f"{self.name} does not have simulated values.")
+        self._set_sim_data(values=None, roc=None, noise=noise, scale=scale)

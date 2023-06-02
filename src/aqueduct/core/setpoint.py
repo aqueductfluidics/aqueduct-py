@@ -9,10 +9,17 @@ Classes:
 """
 import datetime
 import json
-from typing import Callable, Union
+from typing import Callable
+from typing import Union
 
-ALLOWED_DTYPES = (int.__name__, float.__name__, bool.__name__,
-                  list.__name__, datetime.__name__, str.__name__)
+ALLOWED_DTYPES = (
+    int.__name__,
+    float.__name__,
+    bool.__name__,
+    list.__name__,
+    datetime.__name__,
+    str.__name__,
+)
 
 
 class Setpoint:
@@ -48,7 +55,12 @@ class Setpoint:
 
     _aq: "Aqueduct" = None
 
-    def __init__(self, name: str, value: Union[float, int, bool, str, datetime.datetime, list], dtype: str = None):
+    def __init__(
+        self,
+        name: str,
+        value: Union[float, int, bool, str, datetime.datetime, list],
+        dtype: str = None,
+    ):
         """
         Constructor method.
         """
@@ -58,7 +70,8 @@ class Setpoint:
                 dtype = type(value).__name__
                 if dtype not in ALLOWED_DTYPES:
                     raise ValueError(
-                        "Object of type {} is not allowed as a Setpoint".format({dtype}))
+                        "Object of type {} is not allowed as a Setpoint".format({dtype})
+                    )
             except Exception:
                 raise ValueError("Invalid Aqueduct Setpoint")
 
@@ -95,11 +108,7 @@ class Setpoint:
         Returns:
             dict: a dictionary representation of the Setpoint object
         """
-        return dict(
-            n=self.name,
-            v=self.value,
-            d=self.dtype
-        )
+        return dict(n=self.name, v=self.value, d=self.dtype)
 
     def update(self, value):
         """

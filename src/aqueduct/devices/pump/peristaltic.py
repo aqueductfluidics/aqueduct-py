@@ -1,10 +1,12 @@
 """PeristalticPump Module."""
-
 import enum
-from typing import List, Union, Tuple
+from typing import List
+from typing import Tuple
+from typing import Union
 
-from aqueduct.devices.base.obj import Command, Device
 from aqueduct.core.socket_constants import Actions
+from aqueduct.devices.base.obj import Command
+from aqueduct.devices.base.obj import Device
 
 
 # pylint: disable=invalid-name
@@ -148,9 +150,9 @@ class PeristalticPump(Device):
 
             commands = pump.make_commands()
             command = pump.make_start_command(
-                mode=pump.MODE.Continuous, 
+                mode=pump.MODE.Continuous,
                 rate_units=pump.RATE_UNITS.MlMin,
-                rate_value=2, 
+                rate_value=2,
                 direction=pump.STATUS.Clockwise)
             pump.set_command(commands, 0, command)
             pump.start(commands)
@@ -161,11 +163,7 @@ class PeristalticPump(Device):
         :rtype: None
         """
         commands = self.map_commands(commands)
-        payload = self.to_payload(
-            Actions.Start,
-            {"commands": commands},
-            record
-        )
+        payload = self.to_payload(Actions.Start, {"commands": commands}, record)
         self.send_command(payload)
 
     def change_speed(
@@ -191,11 +189,7 @@ class PeristalticPump(Device):
         :rtype: None
         """
         commands = self.map_commands(commands)
-        payload = self.to_payload(
-            Actions.ChangeSpeed,
-            {"commands": commands},
-            record
-        )
+        payload = self.to_payload(Actions.ChangeSpeed, {"commands": commands}, record)
         self.send_command(payload)
 
     def stop(

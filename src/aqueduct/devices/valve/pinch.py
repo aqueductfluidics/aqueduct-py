@@ -1,18 +1,20 @@
 """PinchValve Module."""
-
-from typing import List, Union, Tuple
+from typing import List
+from typing import Tuple
+from typing import Union
 
 import aqueduct.devices.base.obj
 from aqueduct.core.socket_constants import Actions
 
 
-class SetPositionCommand(object):
+class SetPositionCommand:
     """
     Represents a command to set the position of a pinch valve.
 
     :param pct_open: The percentage open value for the pinch valve.
     :type pct_open: float
     """
+
     pct_open: float
 
     def __init__(self, pct_open: float):
@@ -48,9 +50,7 @@ class PinchValve(aqueduct.devices.base.obj.Device):
         """
         commands = self.map_commands(commands)
         payload = self.to_payload(
-            Actions.SetValvePosition,
-            {"commands": commands},
-            record
+            Actions.SetValvePosition, {"commands": commands}, record
         )
         self.send_command(payload)
 
@@ -72,13 +72,10 @@ class PinchValve(aqueduct.devices.base.obj.Device):
         if index < len(commands):
             commands[index] = command
         else:
-            raise Warning(
-                "PinchValve: command index larger than device size!")
+            raise Warning("PinchValve: command index larger than device size!")
 
     @staticmethod
-    def make_set_poisition_command(
-        pct_open: float
-    ) -> SetPositionCommand:
+    def make_set_poisition_command(pct_open: float) -> SetPositionCommand:
         """
         Helper method to create a SetPositionCommand object.
 

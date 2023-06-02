@@ -14,7 +14,7 @@ Functions:
     - "pressure_transducer": an instance of `aqueduct.devices.pressure.transducer.PressureTransducer`.
     - "syringe_pump": an instance of `aqueduct.devices.pump.syringe.SyringePump`.
     - "test_device": an instance of `aqueduct.devices.test_device.TestDevice`.
-    
+
     Parameters:
     - kind (str): The kind of device to create.
     - socket: The socket to use for communication with the device.
@@ -37,10 +37,7 @@ import aqueduct.devices.valve.pinch
 
 
 def create_device(
-    kind: str,
-    socket,
-    socket_lock,
-    **kwargs
+    kind: str, socket, socket_lock, **kwargs
 ) -> typing.Union[aqueduct.devices.base.obj.Device, None]:
     """Create an instance of a device object of a specified type.
 
@@ -55,27 +52,27 @@ def create_device(
     device = None
 
     if kind == "balance":
-        device = aqueduct.devices.balance.Balance(
-            socket, socket_lock, **kwargs)
+        device = aqueduct.devices.balance.Balance(socket, socket_lock, **kwargs)
     elif kind == "optical_density":
         device = aqueduct.devices.optical_density.OpticalDensityProbe(
-            socket, socket_lock, **kwargs)
+            socket, socket_lock, **kwargs
+        )
     elif kind == "peristaltic_pump":
         device = aqueduct.devices.pump.peristaltic.PeristalticPump(
-            socket, socket_lock, **kwargs)
+            socket, socket_lock, **kwargs
+        )
     elif kind == "ph_probe":
-        device = aqueduct.devices.ph.PhProbe(
-            socket, socket_lock, **kwargs)
+        device = aqueduct.devices.ph.PhProbe(socket, socket_lock, **kwargs)
     elif kind == "pinch_valve":
-        device = aqueduct.devices.valve.pinch.PinchValve(
-            socket, socket_lock, **kwargs)
+        device = aqueduct.devices.valve.pinch.PinchValve(socket, socket_lock, **kwargs)
     elif kind == "pressure_transducer":
         device = aqueduct.devices.pressure.transducer.PressureTransducer(
-            socket, socket_lock, **kwargs)
+            socket, socket_lock, **kwargs
+        )
     elif kind == "syringe_pump":
         device = aqueduct.devices.pump.syringe.SyringePump(
-            socket, socket_lock, **kwargs)
+            socket, socket_lock, **kwargs
+        )
     elif kind == "test_device":
-        device = aqueduct.devices.test_device.TestDevice(
-            socket, socket_lock, **kwargs)
+        device = aqueduct.devices.test_device.TestDevice(socket, socket_lock, **kwargs)
     return device

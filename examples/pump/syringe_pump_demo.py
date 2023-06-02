@@ -1,19 +1,21 @@
 """SyringePump demo.
 
-This demo program initializes a SyringePump device, sets 
+This demo program initializes a SyringePump device, sets
 the pump to run continuously at increasing flow rates,
-and then reverses the direction of each pump input one by 
+and then reverses the direction of each pump input one by
 one as it reaches 0 flow rate. The program continuously
-checks the flow rates of each pump input and sends new start 
+checks the flow rates of each pump input and sends new start
 commands to reverse the direction if the flow rate
-reaches 0. 
+reaches 0.
 """
 # import necessary modules
 import time
 from typing import List
 
-from aqueduct.core.aq import Aqueduct, InitParams
-from aqueduct.devices.pump.syringe import SyringePump, Status
+from aqueduct.core.aq import Aqueduct
+from aqueduct.core.aq import InitParams
+from aqueduct.devices.pump.syringe import Status
+from aqueduct.devices.pump.syringe import SyringePump
 
 # get initialization parameters
 params = InitParams.parse()
@@ -36,7 +38,8 @@ for i in range(0, pump.len):
         mode=pump.MODE.Continuous,
         rate_units=pump.RATE_UNITS.MlMin,
         rate_value=i + 1,
-        direction=pump.STATUS.Infusing)
+        direction=pump.STATUS.Infusing,
+    )
     # store the direction used for this command
     last_directions.append(pump.STATUS.Infusing)
     # set the command for this pump
@@ -60,7 +63,8 @@ while True:
                 mode=pump.MODE.Continuous,
                 rate_units=pump.RATE_UNITS.MlMin,
                 rate_value=i + 1,
-                direction=d)
+                direction=d,
+            )
             # update the last direction used for this pump
             last_directions[i] = d
             # set the new command for this pump

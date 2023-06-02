@@ -29,37 +29,33 @@ Attributes:
     _serial_number (Union[int, None]): The serial number of the Aqueduct instance.
 
 """
-
+import argparse
 import datetime
 import json
 import os
 import socket
+import subprocess
+import sys
 import threading
 import time
 import typing
-import argparse
-import subprocess
-import sys
 
 import psutil
-
+from aqueduct.core.input import Input
+from aqueduct.core.input import UserInputTypes
 from aqueduct.core.logging import AqLogger
-from aqueduct.core.input import Input, UserInputTypes
 from aqueduct.core.prompt import Prompt
 from aqueduct.core.recordable import Recordable
 from aqueduct.core.setpoint import Setpoint
-from aqueduct.core.utils import string_to_bool, send_and_wait_for_rx
-
+from aqueduct.core.socket_constants import Events
+from aqueduct.core.socket_constants import OK
+from aqueduct.core.socket_constants import SOCKET_DELAY_S
+from aqueduct.core.socket_constants import SOCKET_TX_ATTEMPTS
+from aqueduct.core.socket_constants import SocketCommands
+from aqueduct.core.utils import send_and_wait_for_rx
+from aqueduct.core.utils import string_to_bool
 from aqueduct.devices.base.obj import Device
 from aqueduct.devices.base.utils import create_device
-
-from aqueduct.core.socket_constants import (
-    Events,
-    OK,
-    SOCKET_DELAY_S,
-    SOCKET_TX_ATTEMPTS,
-    SocketCommands,
-)
 
 
 class InitParams:
@@ -108,7 +104,11 @@ class InitParams:
         parser = argparse.ArgumentParser()
 
         parser.add_argument(
-            "-u", "--user_id", type=str, help="user_id (either int or 'L')", default=None
+            "-u",
+            "--user_id",
+            type=str,
+            help="user_id (either int or 'L')",
+            default=None,
         )
 
         parser.add_argument(
@@ -146,13 +146,13 @@ class Aqueduct:
     Provides an interface to control devices and data in the Aqueduct system.
 
     Args:
-        user_id (typing.Union[None, int, str]): The user ID. If None, 
+        user_id (typing.Union[None, int, str]): The user ID. If None,
             it will default to the 'AQ_USER_ID' environment variable.
-        address (typing.Union[str, None]): The IP address. If None, 
+        address (typing.Union[str, None]): The IP address. If None,
             it will default to the 'AQ_TCP_ADDRESS' environment variable or '127.0.0.1'.
-        port (typing.Union[int, None]): The port number. If None, it will 
+        port (typing.Union[int, None]): The port number. If None, it will
             default to the 'AQ_TCP_PORT' environment variable or 59000.
-        pause (typing.Union[bool, None]): Whether to pause on queue. If None, 
+        pause (typing.Union[bool, None]): Whether to pause on queue. If None,
             it will default to the 'AQ_PAUSE_ON_QUEUE' environment variable or True.
 
     Attributes:
@@ -172,6 +172,7 @@ class Aqueduct:
         _serial_number (Union[int, None]): The serial number of the Aqueduct instance.
 
     """
+
     devices: dict
 
     _socket: socket.socket
@@ -205,16 +206,16 @@ class Aqueduct:
             pause (typing.Union[bool, None]): Whether to pause on queue.
         """
         if user_id is None:
-            user_id = os.environ.get('AQ_USER_ID', '1')
+            user_id = os.environ.get("AQ_USER_ID", "1")
 
         if address is None:
-            address = os.environ.get('AQ_TCP_ADDRESS', '127.0.0.1')
+            address = os.environ.get("AQ_TCP_ADDRESS", "127.0.0.1")
 
         if port is None:
-            port = int(os.environ.get('AQ_TCP_PORT', 59000))
+            port = int(os.environ.get("AQ_TCP_PORT", 59000))
 
         if pause is None:
-            pause = bool(int(os.environ.get('AQ_PAUSE_ON_QUEUE', 1)))
+            pause = bool(int(os.environ.get("AQ_PAUSE_ON_QUEUE", 1)))
 
         self._user_id = user_id
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -229,8 +230,8 @@ class Aqueduct:
         self._port = port
         self._pause_on_queue = pause
 
-        if os.environ.get('AQ_SERIAL_NUMBER') is not None:
-            self._serial_number = int(os.environ.get('AQ_SERIAL_NUMBER'))
+        if os.environ.get("AQ_SERIAL_NUMBER") is not None:
+            self._serial_number = int(os.environ.get("AQ_SERIAL_NUMBER"))
 
         self.devices: dict = {}
 
@@ -281,7 +282,11 @@ class Aqueduct:
             hostname = socket.gethostname()
             local_ip = socket.gethostbyname(hostname)
 
-            return local_ip == self._address or self._address in ["127.0.0.1", "localhost", "::1"]
+            return local_ip == self._address or self._address in [
+                "127.0.0.1",
+                "localhost",
+                "::1",
+            ]
         except Exception:  # pylint: disable=broad-except
             return False
 
@@ -345,7 +350,7 @@ class Aqueduct:
         Initializes the Aqueduct instance.
 
         Args:
-            pause (bool): Whether to pause the process after initialization. If None, 
+            pause (bool): Whether to pause the process after initialization. If None,
                 it defaults to the value set during Aqueduct initialization.
 
         Note:
@@ -396,8 +401,7 @@ class Aqueduct:
             [SocketCommands.RegisterUser.value, self._user_id]
         ).encode()
 
-        _loaded, _payload = self.send_and_wait_for_rx(
-            message, "ok", SOCKET_TX_ATTEMPTS)
+        _loaded, _payload = self.send_and_wait_for_rx(message, "ok", SOCKET_TX_ATTEMPTS)
 
         message = json.dumps(
             [
@@ -503,8 +507,7 @@ class Aqueduct:
                         self._socket_lock,
                         **dev_obj,
                     )
-                    self.devices.update(
-                        {dev_obj.get("base").get("name"): device})
+                    self.devices.update({dev_obj.get("base").get("name"): device})
             return payload
         return None
 
@@ -519,8 +522,7 @@ class Aqueduct:
             ]
         ).encode()
 
-        self.send_and_wait_for_rx(
-            message, Events.CLEAR_SETUP.value, SOCKET_TX_ATTEMPTS)
+        self.send_and_wait_for_rx(message, Events.CLEAR_SETUP.value, SOCKET_TX_ATTEMPTS)
 
     def add_device(self, kind: str, name: str = None):
         """
@@ -541,8 +543,7 @@ class Aqueduct:
             ]
         ).encode()
 
-        self.send_and_wait_for_rx(
-            message, Events.ADD_DEVICE.value, SOCKET_TX_ATTEMPTS)
+        self.send_and_wait_for_rx(message, Events.ADD_DEVICE.value, SOCKET_TX_ATTEMPTS)
 
     def set_log_file_name(self, log_file_name: str):
         """Set the log file name."""
@@ -645,8 +646,7 @@ class Aqueduct:
                 SocketCommands.SocketMessage.value,
                 [
                     Events.SET_RECIPE_PROMPT.value,
-                    dict(
-                        prompt={**dict(user_id=self._user_id), **p.serialize()}),
+                    dict(prompt={**dict(user_id=self._user_id), **p.serialize()}),
                 ],
             ]
         ).encode()
@@ -709,8 +709,7 @@ class Aqueduct:
                 SocketCommands.SocketMessage.value,
                 [
                     Events.SET_RECIPE_INPUT.value,
-                    dict(
-                        input={**dict(user_id=self._user_id), **ipt.serialize()}),
+                    dict(input={**dict(user_id=self._user_id), **ipt.serialize()}),
                 ],
             ]
         ).encode()
@@ -813,8 +812,7 @@ class Aqueduct:
         message = json.dumps(
             [
                 SocketCommands.SocketMessage.value,
-                [Events.UPDATE_USER_PARAMS.value, dict(
-                    params=[setpoint.serialize()])],
+                [Events.UPDATE_USER_PARAMS.value, dict(params=[setpoint.serialize()])],
             ]
         ).encode()
 
@@ -875,8 +873,7 @@ class Aqueduct:
         message = json.dumps(
             [
                 SocketCommands.SocketMessage.value,
-                [Events.CLEAR_USER_RECORDABLES.value,
-                    dict(params=[recordable.name])],
+                [Events.CLEAR_USER_RECORDABLES.value, dict(params=[recordable.name])],
             ]
         ).encode()
         self._socket.settimeout(1)
@@ -963,6 +960,7 @@ class AqHelper:
             provided in the message.
 
     """
+
     _aq: Aqueduct
     _run: bool = True
     _socket: socket.socket
@@ -984,8 +982,7 @@ class AqHelper:
             [SocketCommands.RegisterUser.value, self._aq.user_id]
         ).encode()
 
-        send_and_wait_for_rx(message, self._socket, None,
-                             OK, SOCKET_TX_ATTEMPTS)
+        send_and_wait_for_rx(message, self._socket, None, OK, SOCKET_TX_ATTEMPTS)
 
         message = json.dumps(
             [
@@ -996,8 +993,7 @@ class AqHelper:
             ]
         ).encode()
 
-        send_and_wait_for_rx(message, self._socket, None,
-                             OK, SOCKET_TX_ATTEMPTS)
+        send_and_wait_for_rx(message, self._socket, None, OK, SOCKET_TX_ATTEMPTS)
 
     def shutdown(self):
         """Shut down the `AqHelper` object."""
@@ -1006,7 +1002,7 @@ class AqHelper:
     def run(self):
         """Continuously receives data from the socket connection and processes it.
 
-        If the received data contains updated user parameters, calls the 
+        If the received data contains updated user parameters, calls the
         `handle_updated_user_params` method with the updated parameters.
         If an exception is raised while processing the data, the exception is printed
         if debug mode is enabled. The method runs until `_run` is set to False.
@@ -1018,8 +1014,7 @@ class AqHelper:
                     commands = json.loads(data.replace(b"][", b","))
                     for cmd, payload in zip(commands[::2], commands[1::2]):
                         if cmd == Events.UPDATED_USER_PARAMS.value:
-                            self.handle_updated_user_params(
-                                json.loads(payload))
+                            self.handle_updated_user_params(json.loads(payload))
                     time.sleep(self._update_frequency_s)
             except BaseException as err:  # pylint: disable=broad-except
                 if self._aq.is_debug:
@@ -1054,6 +1049,7 @@ class AqManager:
         _update_frequency_s (float): The frequency at which the manager checks for updates from the application server.
 
     """
+
     _pid: int
     _user_id: typing.Union[int, str]
     _run: bool = True
@@ -1087,11 +1083,9 @@ class AqManager:
 
         self._socket.connect((address, port))
 
-        message = json.dumps(
-            [SocketCommands.RegisterUser.value, user_id]).encode()
+        message = json.dumps([SocketCommands.RegisterUser.value, user_id]).encode()
 
-        send_and_wait_for_rx(message, self._socket, None,
-                             OK, SOCKET_TX_ATTEMPTS)
+        send_and_wait_for_rx(message, self._socket, None, OK, SOCKET_TX_ATTEMPTS)
 
         message = json.dumps(
             [
@@ -1102,8 +1096,7 @@ class AqManager:
             ]
         ).encode()
 
-        send_and_wait_for_rx(message, self._socket, None,
-                             OK, SOCKET_TX_ATTEMPTS)
+        send_and_wait_for_rx(message, self._socket, None, OK, SOCKET_TX_ATTEMPTS)
 
     @classmethod
     def code(cls) -> str:

@@ -1,6 +1,6 @@
 """
-The `PhProbe` class represents a pH probe device in the Aqueduct Fluidics ecosystem. 
-The class inherits from the base `Device` class and provides methods 
+The `PhProbe` class represents a pH probe device in the Aqueduct Fluidics ecosystem.
+The class inherits from the base `Device` class and provides methods
 to interact with and control the pH probe device.
 
 Example usage:
@@ -17,11 +17,13 @@ ph_value = ph_probe.get_value()
 ph_values = ph_probe.get_all_values()
 ```
 
-The example demonstrates how to use the `PhProbe` class to perform 
+The example demonstrates how to use the `PhProbe` class to perform
 operations such as calibrating the pH probe, obtaining a single
  pH reading, and retrieving all pH readings from the pH probe.
 """
+from typing import List
 from typing import Tuple
+from typing import Union
 
 from aqueduct.devices.base.obj import Device
 
@@ -30,7 +32,7 @@ class PhProbe(Device):
     """
     A class representing a pH probe device.
 
-    This class provides an interface to read pH values from a pH probe device. 
+    This class provides an interface to read pH values from a pH probe device.
     It inherits from the base `Device` class and defines additional methods specific to pH probes.
 
     Args:
@@ -76,7 +78,7 @@ class PhProbe(Device):
         return self.extract_live_as_tuple("v")
 
     @property
-    def ph(self): # pylint: disable=invalid-name
+    def ph(self):  # pylint: disable=invalid-name
         """
         Get all of the pH readings from the device.
 
@@ -84,3 +86,57 @@ class PhProbe(Device):
         :rtype: tuple[float]
         """
         return self.get_all_values()
+
+    def set_sim_data(
+        self,
+        values: Union[List[Union[float, None]], tuple, None],
+        roc: Union[List[Union[float, None]], tuple, None],
+        noise: Union[List[Union[float, None]], tuple, None],
+    ):
+        """
+        Sets the simulated data for the pH probe.
+
+        :param values: The simulated values.
+        :type values: Union[List[Union[float, None]], Tuple]
+        :param roc: The rates of change for the simulated values.
+        :type roc: Union[List[Union[float, None]], Tuple]
+        :param noise: The noise values for the simulated data.
+        :type noise: Union[List[Union[float, None]], Tuple]
+        """
+        self._set_sim_data(values, roc, noise, 1.0)
+
+    def set_sim_values(
+        self,
+        values: Union[List[Union[float, None]], tuple],
+    ):
+        """
+        Sets the simulated values for the pH probe.
+
+        :param values: The simulated values.
+        :type values: Union[List[Union[float, None]], Tuple]
+        """
+        self.set_sim_data(values=values, roc=None, noise=None)
+
+    def set_sim_rates_of_change(
+        self,
+        roc: Union[List[Union[float, None]], tuple],
+    ):
+        """
+        Sets the rates of change for the simulated values of the pH probe.
+
+        :param roc: The rates of change for the simulated values.
+        :type roc: Union[List[Union[float, None]], Tuple]
+        """
+        self.set_sim_data(values=None, roc=roc, noise=None)
+
+    def set_sim_noise(
+        self,
+        noise: Union[List[Union[float, None]], tuple],
+    ):
+        """
+        Sets the noise values for the simulated data of the pH probe.
+
+        :param noise: The noise values for the simulated data.
+        :type noise: Union[List[Union[float, None]], Tuple]
+        """
+        self.set_sim_data(values=None, roc=None, noise=noise)

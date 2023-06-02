@@ -1,12 +1,13 @@
 """User Recordable demo."""
-from aqueduct.core.aq import Aqueduct, InitParams
+from aqueduct.core.aq import Aqueduct
+from aqueduct.core.aq import InitParams
 
 params = InitParams.parse()
 aq = Aqueduct(params.user_id, params.ip_address, params.port)
 aq.initialize(params.init)
 
 
-v = 1.
+v = 1.0
 
 f = aq.recordable(
     name="test_float",
@@ -16,7 +17,7 @@ f = aq.recordable(
 
 increment = aq.setpoint(
     name="increment",
-    value=1.,
+    value=1.0,
     dtype=float.__name__,
 )
 

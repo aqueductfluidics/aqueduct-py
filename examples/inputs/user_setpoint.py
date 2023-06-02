@@ -20,6 +20,5 @@ sb = aq.setpoint(
 )
 
 while True:
-    time.sleep(.1)
+    time.sleep(0.1)
     print(sf.value, sb.value)
-

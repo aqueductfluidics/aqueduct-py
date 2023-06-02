@@ -1,6 +1,6 @@
 """
-The `PressureTransducer` class represents a pressure transducer device 
-in the Aqueduct Fluidics ecosystem. The class inherits from the 
+The `PressureTransducer` class represents a pressure transducer device
+in the Aqueduct Fluidics ecosystem. The class inherits from the
 base `Device` class and provides methods to interact with and control the pressure transducer device.
 
 Example usage:
@@ -20,15 +20,19 @@ pressure = pressure_transducer.get_value()
 pressures = pressure_transducer.get_all_values()
 ```
 
-The example demonstrates how to use the `PressureTransducer` class to perform 
-operations such as taring the pressure transducer, obtaining 
+The example demonstrates how to use the `PressureTransducer` class to perform
+operations such as taring the pressure transducer, obtaining
 a single pressure reading, and retrieving all pressure readings from the pressure transducer.
 """
-from typing import Tuple, Union
+from typing import List
+from typing import Tuple
+from typing import Union
 
 import aqueduct.devices.base.obj
 from aqueduct.core.socket_constants import Actions
-from aqueduct.core.units import PressureUnits, convert_pressure_values
+from aqueduct.core.units import convert_pressure_values
+from aqueduct.core.units import get_pressure_conversion
+from aqueduct.core.units import PressureUnits
 
 
 class PressureTransducer(aqueduct.devices.base.obj.Device):
@@ -58,11 +62,7 @@ class PressureTransducer(aqueduct.devices.base.obj.Device):
         commands = self.len * [None]
         commands[index] = 1
 
-        payload = self.to_payload(
-            Actions.Tare,
-            {"commands": commands},
-            record
-        )
+        payload = self.to_payload(Actions.Tare, {"commands": commands}, record)
         self.send_command(payload)
 
     def value(self, index: int = 0):
@@ -117,7 +117,7 @@ class PressureTransducer(aqueduct.devices.base.obj.Device):
         :rtype: Tuple[float]
         """
         return convert_pressure_values(self.torr, PressureUnits.TORR, PressureUnits.PSI)
-    
+
     @property
     def atm(self):
         """
@@ -126,8 +126,10 @@ class PressureTransducer(aqueduct.devices.base.obj.Device):
         :return: The pressure values for all inputs in atmospheres.
         :rtype: Tuple[float]
         """
-        return convert_pressure_values(self.torr, PressureUnits.TORR, PressureUnits.ATMOSPHERE_STD)
-    
+        return convert_pressure_values(
+            self.torr, PressureUnits.TORR, PressureUnits.ATMOSPHERE_STD
+        )
+
     @property
     def pascal(self):
         """
@@ -136,8 +138,10 @@ class PressureTransducer(aqueduct.devices.base.obj.Device):
         :return: The pressure values for all inputs in pascals.
         :rtype: Tuple[float]
         """
-        return convert_pressure_values(self.torr, PressureUnits.TORR, PressureUnits.PASCAL)
-    
+        return convert_pressure_values(
+            self.torr, PressureUnits.TORR, PressureUnits.PASCAL
+        )
+
     @property
     def bar(self):
         """
@@ -147,3 +151,70 @@ class PressureTransducer(aqueduct.devices.base.obj.Device):
         :rtype: Tuple[float]
         """
         return convert_pressure_values(self.torr, PressureUnits.TORR, PressureUnits.BAR)
+
+    def set_sim_data(
+        self,
+        values: Union[List[Union[float, None]], tuple, None],
+        roc: Union[List[Union[float, None]], tuple, None],
+        noise: Union[List[Union[float, None]], tuple, None],
+        units: PressureUnits = PressureUnits.TORR,
+    ):
+        """
+        Sets the simulated data for the pressure transducer.
+
+        :param values: The simulated values.
+        :type values: Union[List[Union[float, None]], Tuple]
+        :param roc: The rates of change for the simulated values.
+        :type roc: Union[List[Union[float, None]], Tuple]
+        :param noise: The noise values for the simulated data.
+        :type noise: Union[List[Union[float, None]], Tuple]
+        :param units: The units for the simulated data. Default is PressureUnits.TORR.
+        :type units: PressureUnits
+        """
+        scale = 1.0 / get_pressure_conversion(PressureUnits.TORR, units)
+        self._set_sim_data(values, roc, noise, scale)
+
+    def set_sim_values(
+        self,
+        values: Union[List[Union[float, None]], tuple],
+        units: PressureUnits = PressureUnits.TORR,
+    ):
+        """
+        Sets the simulated values for the pressure transducer.
+
+        :param values: The simulated values.
+        :type values: Union[List[Union[float, None]], Tuple]
+        :param units: The units for the simulated values. Default is PressureUnits.TORR.
+        :type units: PressureUnits
+        """
+        self.set_sim_data(values=values, roc=None, noise=None, units=units)
+
+    def set_sim_rates_of_change(
+        self,
+        roc: Union[List[Union[float, None]], tuple],
+        units: PressureUnits = PressureUnits.TORR,
+    ):
+        """
+        Sets the rates of change for the simulated values of the pressure transducer.
+
+        :param roc: The rates of change for the simulated values.
+        :type roc: Union[List[Union[float, None]], Tuple]
+        :param units: The units of the input values.
+        :type units: PressureUnits
+        """
+        self.set_sim_data(values=None, roc=roc, noise=None, units=units)
+
+    def set_sim_noise(
+        self,
+        noise: Union[List[Union[float, None]], tuple],
+        units: PressureUnits = PressureUnits.TORR,
+    ):
+        """
+        Sets the noise values for the simulated data of the pressure transducer.
+
+        :param noise: The noise values for the simulated data.
+        :type noise: Union[List[Union[float, None]], Tuple]
+        :param units: The units for the simulated data. Default is PressureUnits.TORR.
+        :type units: PressureUnits
+        """
+        self.set_sim_data(values=None, roc=None, noise=noise, units=units)

@@ -3,25 +3,25 @@ The aqueduct.core.socket_helpers module provides various helper functions for wo
 
 Functions:
 - string_to_bool(string: str) -> bool: Convert a string to a boolean value.
-- send_and_wait_for_rx(message: str, 
-    socket: socket.socket, 
-    lock: Union[threading.Lock, None], 
-    response: str, 
-    attempts: int = SOCKET_TX_ATTEMPTS, 
-    timeout: int = 5, 
-    size: int = 1024 * 8, 
+- send_and_wait_for_rx(message: str,
+    socket: socket.socket,
+    lock: Union[threading.Lock, None],
+    response: str,
+    attempts: int = SOCKET_TX_ATTEMPTS,
+    timeout: int = 5,
+    size: int = 1024 * 8,
     delay_s: Union[None, float] = None
     ) -> Tuple[bool, str]: Send a message over a socket and wait for a response.
 
 """
-
 import json
+import socket
 import threading
 import time
 import typing
-import socket
 
-from aqueduct.core.socket_constants import SOCKET_DELAY_S, SOCKET_TX_ATTEMPTS
+from aqueduct.core.socket_constants import SOCKET_DELAY_S
+from aqueduct.core.socket_constants import SOCKET_TX_ATTEMPTS
 
 
 def string_to_bool(string: str) -> bool:
@@ -36,8 +36,7 @@ def string_to_bool(string: str) -> bool:
     elif str(string).lower() in ("false", "0"):
         return False
     else:
-        raise TypeError(
-            f"Could not convert {string} to a boolean value.")
+        raise TypeError(f"Could not convert {string} to a boolean value.")
 
 
 # pylint: disable=too-many-arguments

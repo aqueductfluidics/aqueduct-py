@@ -5,7 +5,6 @@ The `Aqueduct` class is used to connect to an Aqueduct server and send commands 
 The `SocketCommands` and `Events` enums provide constants for identifying socket commands and events.
 The `Actions` enum provides constants for identifying device actions.
 """
-
 import enum
 
 SOCKET_DELAY_S = 0.005
@@ -16,6 +15,7 @@ OK = "ok"
 
 class SocketCommands(enum.IntEnum):
     """Enumeration for socket commands."""
+
     RegisterUser = 0
     RegisterEvents = 1
     SocketMessage = 2
@@ -23,6 +23,7 @@ class SocketCommands(enum.IntEnum):
 
 class Events(enum.Enum):
     """Enumeration for events."""
+
     ADD_DEVICE = "add_device"
     CLEAR_DEVICE_RECORDABLE = "clear_device_recordable"
     CLEAR_SETUP = "clear_setup"
@@ -46,6 +47,7 @@ class Events(enum.Enum):
 
 class Actions(enum.IntEnum):
     """Enumeration for device actions."""
+
     SetConfig = 0
     SetSimValues = 1
     UpdateRecord = 2

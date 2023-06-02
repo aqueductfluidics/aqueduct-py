@@ -1,12 +1,13 @@
 """pH Probe Example Script
 
-This script demonstrates the usage of the `PhProbe` device from the 
+This script demonstrates the usage of the `PhProbe` device from the
 Aqueduct library. It connects to an Aqueduct instance,
 initializes the system, and performs operations on the pH probe device.
 """
 import time
 
-from aqueduct.core.aq import Aqueduct, InitParams
+from aqueduct.core.aq import Aqueduct
+from aqueduct.core.aq import InitParams
 from aqueduct.devices.ph import PhProbe
 
 # Parse the initialization parameters from the command line

@@ -1,12 +1,14 @@
 """Pressure Transducer Example Script
 
-This script demonstrates the usage of the `PressureTransducer` device from the 
+This script demonstrates the usage of the `PressureTransducer` device from the
 Aqueduct library. It connects to an Aqueduct instance,
 initializes the system, and performs operations on the pressure transducer device.
 """
 import time
 
-from aqueduct.core.aq import Aqueduct, InitParams
+from aqueduct.core.aq import Aqueduct
+from aqueduct.core.aq import InitParams
+from aqueduct.core.units import PressureUnits
 from aqueduct.devices.pressure import PressureTransducer
 
 # Parse the initialization parameters from the command line
@@ -23,6 +25,8 @@ aq.set_command_delay(0.05)
 
 # Get the pressure transducer device from the Aqueduct instance
 pressure_transducer: PressureTransducer = aq.devices.get("pressure_transducer_000001")
+
+pressure_transducer.set_sim_roc((1,), units=PressureUnits.PSI)
 
 # Continuously perform operations on the pressure transducer device
 while True:

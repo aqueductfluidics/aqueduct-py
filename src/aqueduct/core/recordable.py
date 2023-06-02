@@ -4,13 +4,18 @@ This module provides a class for logging timestamped data.
 Classes:
     Recordable: A class to provide logging functionality for timestamped data.
 """
-
 import datetime
 import json
 from typing import Union
 
-ALLOWED_DTYPES = (int.__name__, float.__name__, bool.__name__,
-                  list.__name__, datetime.__name__, str.__name__)
+ALLOWED_DTYPES = (
+    int.__name__,
+    float.__name__,
+    bool.__name__,
+    list.__name__,
+    datetime.__name__,
+    str.__name__,
+)
 
 
 class Recordable:
@@ -25,6 +30,7 @@ class Recordable:
         enter an invalid value
     :type dtype: {'int', 'float', 'bool', 'list', 'datetime', 'str'}, optional
     """
+
     name: str = None
     value: Union[float, int, bool, str, datetime.datetime, list] = None
     dtype: str = None
@@ -32,7 +38,12 @@ class Recordable:
 
     _aq: "Aqueduct" = None
 
-    def __init__(self, name: str, value: Union[float, int, bool, str, datetime.datetime, list], dtype: str = None):
+    def __init__(
+        self,
+        name: str,
+        value: Union[float, int, bool, str, datetime.datetime, list],
+        dtype: str = None,
+    ):
         """
         Constructor method.
 
@@ -48,7 +59,10 @@ class Recordable:
                 dtype = type(value).__name__
                 if dtype not in ALLOWED_DTYPES:
                     raise ValueError(
-                        "Object of type {} is not allowed as a Recordable".format({dtype}))
+                        "Object of type {} is not allowed as a Recordable".format(
+                            {dtype}
+                        )
+                    )
             except Exception:
                 raise ValueError("Invalid Aqueduct Recordable")
 
@@ -81,11 +95,7 @@ class Recordable:
 
         :return: Dictionary representing the Recordable.
         """
-        return dict(
-            n=self.name,
-            v=self.value,
-            d=self.dtype
-        )
+        return dict(n=self.name, v=self.value, d=self.dtype)
 
     def update(self, value):
         """

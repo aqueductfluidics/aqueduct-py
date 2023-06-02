@@ -3,11 +3,9 @@ import time
 from enum import Enum
 from typing import Union
 
+from aqueduct.core.socket_constants import Events
+from aqueduct.core.socket_constants import SocketCommands
 from aqueduct.core.utils import send_and_wait_for_rx
-from aqueduct.core.socket_constants import (
-    Events,
-    SocketCommands,
-)
 
 
 class UserInputTypes(Enum):
@@ -21,6 +19,7 @@ class UserInputTypes(Enum):
         TABLE: A User Input type representing a table.
         CSV_UPLOAD: A User Input type representing a CSV file upload field.
     """
+
     DROPDOWN = "dropdown"
     TEXT_INPUT = "text_input"
     BUTTONS = "buttons"
@@ -28,7 +27,7 @@ class UserInputTypes(Enum):
     CSV_UPLOAD = "csv"
 
 
-class Input(object):
+class Input:
     """
     A class to provide simple creation of User Inputs.
 
@@ -38,13 +37,13 @@ class Input(object):
             resumes execution if the Input has not been executed. Set to None
             or leave blank to disable a time-out. Should be number-like.
 
-        input_type (str, optional): The type of input to create, one of UserInputTypes. 
+        input_type (str, optional): The type of input to create, one of UserInputTypes.
             Defaults to UserInputTypes.TEXT_INPUT.value.
-        options (list, optional): A list of options for a dropdown or button input type. 
+        options (list, optional): A list of options for a dropdown or button input type.
             Defaults to None.
-        rows (list, optional): A list of rows to display in a table input type. 
+        rows (list, optional): A list of rows to display in a table input type.
             Defaults to None.
-        dtype (str, optional): The data type of the input value. One of {'int', 'float', 'bool', 
+        dtype (str, optional): The data type of the input value. One of {'int', 'float', 'bool',
             'list', 'datetime', 'str'}. Defaults to None.
 
     Attributes:
@@ -56,10 +55,11 @@ class Input(object):
         input_type (str): The type of input to create, one of UserInputTypes.
         options (list): A list of options for a dropdown or button input type.
         rows (list): A list of rows to display in a table input type.
-        dtype (str): The data type of the input value. One of {'int', 'float', 'bool', 
+        dtype (str): The data type of the input value. One of {'int', 'float', 'bool',
             'list', 'datetime', 'str'}.
 
     """
+
     message = None
     timeout_s = None
     start_time = None

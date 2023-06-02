@@ -1,4 +1,6 @@
-from typing import List, Tuple, Union
+from typing import List
+from typing import Tuple
+from typing import Union
 
 import aqueduct.devices.base.obj
 

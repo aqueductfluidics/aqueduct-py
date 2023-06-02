@@ -13,4 +13,3 @@ ipt = aq.input(
 )
 
 input_value = json.loads(ipt.get_value())
-

@@ -22,10 +22,10 @@ Methods:
         Stop one or more pump inputs.
     set_valves(commands: List[Union[SetRotaryValveCommand, None]] = None) -> dict:
         Set the rotary valves of one or more pumps.
-    set_command(commands: List[Union[StartCommand, StopCommand, ChangeSpeedCommand, None]], index: int, 
+    set_command(commands: List[Union[StartCommand, StopCommand, ChangeSpeedCommand, None]], index: int,
                 command: Union[StartCommand, StopCommand, ChangeSpeedCommand]):
         Helper method to create an instance of a `PumpCommand`.
-    make_start_command(mode: Mode, direction: Status, rate_value: Union[float, int], rate_units: RateUnits, 
+    make_start_command(mode: Mode, direction: Status, rate_value: Union[float, int], rate_units: RateUnits,
                        finite_value: Union[float, int, None] = None, finite_units: Union[FiniteUnits, None] = None) -> StartCommand:
         Helper method to create an instance of a `StartCommand`.
     make_stop_command() -> ChangeSpeedCommand:
@@ -40,12 +40,14 @@ Methods:
         Get all of the pump input statuses.
 """
 # pylint: disable=too-few-public-methods
-
 import enum
-from typing import List, Union, Tuple
+from typing import List
+from typing import Tuple
+from typing import Union
 
-from aqueduct.devices.base.obj import Command, Device
 from aqueduct.core.socket_constants import Actions
+from aqueduct.devices.base.obj import Command
+from aqueduct.devices.base.obj import Device
 
 
 # pylint: disable=invalid-name
@@ -112,6 +114,7 @@ class StartCommand(Command):
         finite_value (Union[float, int, None], optional): The finite value to use for finite mode operation. Defaults to None.
         finite_units (Union[FiniteUnits, None], optional): The units used for finite mode operation. Defaults to None.
     """
+
     mode: Mode
     direction: Status
     rate_value: Union[float, int]
@@ -157,6 +160,7 @@ class StopCommand(Command):
     Attributes:
         stop (int): A flag to indicate whether to stop the input.
     """
+
     stop: int
 
     def __init__(self, **kwargs):
@@ -180,6 +184,7 @@ class ChangeSpeedCommand(Command):
         rate_value (Union[float, int]): The new speed value for the pump input.
         rate_units (RateUnits): The rate units used for the pump input.
     """
+
     rate_value: Union[float, int]
     rate_units: RateUnits
 
@@ -204,6 +209,7 @@ class SetRotaryValveCommand(Command):
         port (int): The port to which the rotary valve is connected.
         direction (Union[int, None]): The direction to set the rotary valve. None for no movement, 1 or -1 for movement.
     """
+
     port: int
     direction: Union[int, None]
 
@@ -229,8 +235,14 @@ class SetRotaryValveCommand(Command):
 class SyringePumpConfig:
     """A configuration object for a syringe pump."""
 
-    def __init__(self, syringe_diam_mm: float, syringe_length_mm: float, syringe_material: str,
-                 syringe_volume_ul: float, valve_configuration: int):
+    def __init__(
+        self,
+        syringe_diam_mm: float,
+        syringe_length_mm: float,
+        syringe_material: str,
+        syringe_volume_ul: float,
+        valve_configuration: int,
+    ):
         """
         Initializes a SyringePumpConfig object.
 
@@ -259,12 +271,13 @@ class SyringePump(Device):
         socket_lock: A lock used to synchronize access to the socket.
         **kwargs: Additional keyword arguments to pass to the base `Device` constructor.
     """
+
     stat: List[SyringePumpConfig]
 
     def __init__(self, socket, socket_lock, **kwargs):
         super().__init__(socket, socket_lock, **kwargs)
         self.stat = []
-        for s in kwargs.get('stat'):
+        for s in kwargs.get("stat"):
             c = SyringePumpConfig(**s)
             self.stat.append(c)
 
@@ -299,8 +312,7 @@ class SyringePump(Device):
         :rtype: None
         """
         commands = self.map_commands(commands)
-        payload = self.to_payload(
-            Actions.Start, {"commands": commands}, record)
+        payload = self.to_payload(Actions.Start, {"commands": commands}, record)
         self.send_command(payload)
 
     def change_speed(
@@ -326,8 +338,7 @@ class SyringePump(Device):
         :rtype: None
         """
         commands = self.map_commands(commands)
-        payload = self.to_payload(Actions.ChangeSpeed, {
-                                  "commands": commands}, record)
+        payload = self.to_payload(Actions.ChangeSpeed, {"commands": commands}, record)
         self.send_command(payload)
 
     def stop(
@@ -476,7 +487,7 @@ class SyringePump(Device):
 
             status = pump.get_status()
             len(state) # == pump.len
-            print(status[2]) # == 
+            print(status[2]) # ==
 
         :return: status
         :rtype: Tuple[Status]
@@ -494,7 +505,7 @@ class SyringePump(Device):
 
             active = pump.get_active()
             len(state) # == pump.len
-            print(active[2]) # == 
+            print(active[2]) # ==
 
         :return: active
         :rtype: Tuple[bool]

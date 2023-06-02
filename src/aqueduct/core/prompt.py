@@ -2,11 +2,9 @@ import json
 import time
 from typing import Union
 
+from aqueduct.core.socket_constants import Events
+from aqueduct.core.socket_constants import SocketCommands
 from aqueduct.core.utils import send_and_wait_for_rx
-from aqueduct.core.socket_constants import (
-    Events,
-    SocketCommands,
-)
 
 
 class Prompt:
@@ -50,7 +48,9 @@ class Prompt:
     _delay_s = 0.5
     _aq: "aqueduct.core.aq.Aqueduct"
 
-    def __init__(self, message: str, timeout_s: Union[int, str], pause_recipe: Union[bool, None]):
+    def __init__(
+        self, message: str, timeout_s: Union[int, str], pause_recipe: Union[bool, None]
+    ):
         """
         Constructor method.
         """
@@ -111,7 +111,7 @@ class Prompt:
             message=self.message,
             timeout_s=self.timeout_s,
             start_time=self.start_time,
-            pause_recipe=self.pause_recipe
+            pause_recipe=self.pause_recipe,
         )
 
     def assign(self, aq: "aqueduct.core.aq.Aqueduct"):

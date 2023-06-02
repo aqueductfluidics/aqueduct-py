@@ -4,10 +4,9 @@ The `logging` module provides a logger implementation for the Aqueduct system.
 Classes:
 - AqLogger: A logger that writes log messages to a file at a configurable path.
 """
-import os
 import logging
+import os
 from datetime import datetime
-
 from typing import Union
 
 
@@ -33,13 +32,14 @@ class IsoTimeFormatter(logging.Formatter):
 class AqLogger:
     """A class that wraps the Python logging module to create a logger that writes to a file.
 
-    If the 'AQ_LOG_PATH' environment variable is not set, 
+    If the 'AQ_LOG_PATH' environment variable is not set,
     the path will be set to the current working directory.
 
     Attributes:
             logger (logging.Logger): The logger instance.
             log_path (str): The path to the log file.
     """
+
     _log_file_path: str
     _log_file_name: str
     _initialized: bool
@@ -49,16 +49,16 @@ class AqLogger:
         Initializes an instance of the AqLogger.
 
         Args:
-                log_file_name (Union[str, None]): The name of the log file. If None, 
+                log_file_name (Union[str, None]): The name of the log file. If None,
                 it will be generated based on the current timestamp.
-                log_path (Union[str, None]): The path to the log file. If None, it will 
+                log_path (Union[str, None]): The path to the log file. If None, it will
                 default to the 'AQ_LOG_PATH' environment variable or the current working directory.
         """
         self._logger = logging.getLogger("AqLogger")
         self._logger.setLevel(logging.DEBUG)
 
         if log_path is None:
-            log_path = os.environ.get('AQ_LOG_PATH')
+            log_path = os.environ.get("AQ_LOG_PATH")
 
         if log_path is None:
             log_path = os.getcwd()
@@ -82,9 +82,7 @@ class AqLogger:
             file_handler = logging.FileHandler(log_path)
 
             # Create formatter and add it to the file handler
-            formatter = IsoTimeFormatter(
-                '%(asctime)s %(levelname)s %(message)s'
-            )
+            formatter = IsoTimeFormatter("%(asctime)s %(levelname)s %(message)s")
             file_handler.setFormatter(formatter)
 
             # Add the file handler to the logger
