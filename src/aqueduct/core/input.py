@@ -179,15 +179,10 @@ class Input:
             except json.decoder.JSONDecodeError:
                 return False
 
-    def get_value(self, delete_if_set: bool = True):
+    def get_value(self):
         """
         Read the value from the user input.
 
-        If `delete_if_set` is set to `True`, will delete the input upon readout
-        if the Input has been executed.
-
-        :param delete_if_set:
-        :type delete_if_set: bool, defaults to True
         :return: Input's value
         :rtype: {'int', 'float', 'bool', 'list', 'datetime', 'str'}
         """
@@ -207,6 +202,7 @@ class Input:
                 sock=self._aq.socket,
                 lock=self._aq.socket_lock,
                 response=Events.GET_RECIPE_INPUT_VALUE.value,
+                size=4096*8,
             )
 
             try:
