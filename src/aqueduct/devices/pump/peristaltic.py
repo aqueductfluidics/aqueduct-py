@@ -129,6 +129,57 @@ class ChangeSpeedCommand(Command):
         return self.rate_units, self.rate_value
 
 
+class PeristalticPumpLiveKeys(enum.Enum):
+    ml_target = "mt"
+    ml_done = "md"
+    ml_min = "mm"
+    status = "s"
+    mode = "m"
+
+
+class PeristalticPumpLive:
+    """The live representation of a peristaltic pump."""
+
+    mapping = {
+        PeristalticPumpLiveKeys.ml_target: "ml_target",
+        PeristalticPumpLiveKeys.ml_done: "ml_done",
+        PeristalticPumpLiveKeys.ml_min: "ml_min",
+        PeristalticPumpLiveKeys.status: "status",
+        PeristalticPumpLiveKeys.mode: "mode",
+    }
+
+    ml_target: float
+    ml_done: float
+    ml_min: float
+    status: int
+    mode: int
+
+    def __init__(
+        self, ml_target: float, ml_done: float, ml_min: float, status: int, mode: int
+    ):
+        """
+        Initializes a PeristalticPumpLive object.
+
+        Args:
+            ml_target (float): The target volume in milliliters.
+            ml_done (float): The volume already dispensed in milliliters.
+            ml_min (float): The minimum flow rate in milliliters per minute.
+            status (int): The status of the peristaltic pump.
+            mode (int): The operational mode of the peristaltic pump.
+        """
+        self.ml_target = ml_target
+        self.ml_done = ml_done
+        self.ml_min = ml_min
+        self.status = status
+        self.mode = mode
+
+    @classmethod
+    def from_live(cls, **data) -> "PeristalticPumpLive":
+        return PeristalticPumpLive(
+            **{attr_name: data[key.value] for key, attr_name in cls.mapping.items()}
+        )
+
+
 class PeristalticPump(Device):
     """PeristalticPump class."""
 
@@ -136,6 +187,16 @@ class PeristalticPump(Device):
     MODE = Mode
     RATE_UNITS = RateUnits
     FINITE_UNITS = FiniteUnits
+
+    @property
+    def live(self) -> Tuple[PeristalticPumpLive]:
+        """
+        Get the live data of the peristaltic pump.
+
+        Returns:
+            Tuple[PeristalticPumpLive]: The live data of the peristaltic pump as a tuple of PeristalticPumpLive objects.
+        """
+        return self.get_live_and_cast(PeristalticPumpLive.from_live)
 
     def start(
         self,
@@ -246,7 +307,7 @@ class PeristalticPump(Device):
         )
 
     @staticmethod
-    def make_stop_command() -> ChangeSpeedCommand:
+    def make_stop_command() -> StopCommand:
         """Helper method to create an instance of a :class:`StopCommand`.
 
         A :class:`StopCommand` is an object with the required fields to stop a pump input.
@@ -272,16 +333,25 @@ class PeristalticPump(Device):
 
     def get_ml_min(self) -> Tuple[float]:
         """
-        Get all of the diplacement rate values (in mL/min) for the peristaltic pump.
+        Get all of the displacement rate values (in mL/min) for the peristaltic pump.
 
-        :Example: read all pumps:
+        :Example: Read all pumps:
 
         .. code-block:: python
 
             ml_min_values = pump.get_ml_min()
-            len(ml_min_values) # == pump.len
+            len(ml_min_values)  # == pump.len
 
-        :return: weight values
-        :rtype: list
+        :return: Displacement rate values in mL/min.
+        :rtype: tuple
         """
-        return self.extract_live_as_tuple("mm")
+        return self.extract_live_as_tuple(PeristalticPumpLiveKeys.ml_min.value)
+
+    def get_ml_done(self) -> Tuple[float]:
+        """
+        Get the volume dispensed by the peristaltic pump in milliliters.
+
+        :return: Volume dispensed in milliliters.
+        :rtype: tuple
+        """
+        return self.extract_live_as_tuple(PeristalticPumpLiveKeys.ml_done.value)

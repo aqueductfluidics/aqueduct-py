@@ -1,4 +1,5 @@
 """PinchValve Module."""
+import enum
 from typing import List
 from typing import Tuple
 from typing import Union
@@ -30,10 +31,69 @@ class SetPositionCommand:
         return self.pct_open
 
 
+class PinchValveLiveKeys(enum.Enum):
+    pct_open = "p"
+
+
+class PinchValveLive:
+    """
+    The live representation of a pinch valve.
+
+    Attributes:
+        pct_open (float): The percentage open of the pinch valve, ranging from 0.0 to 1.0.
+    """
+
+    mapping = {PinchValveLiveKeys.pct_open: "pct_open"}
+
+    """
+    The live representation of a pinch valve.
+
+    Attributes:
+        pct_open (float): The percentage open of the pinch valve, ranging from 0.0 to 1.0.
+    """
+
+    def __init__(
+        self,
+        pct_open: float,
+    ):
+        """
+        Initialize a PinchValveLive instance.
+
+        Args:
+            pct_open (float): The percentage open of the pinch valve.
+        """
+        self.pct_open = pct_open
+
+    @classmethod
+    def from_live(cls, **data) -> "PinchValveLive":
+        """
+        Create a PinchValveLive instance from the provided live data.
+
+        Args:
+            data: The live data of the pinch valve.
+
+        Returns:
+            PinchValveLive: The created PinchValveLive instance.
+        """
+        return PinchValveLive(
+            **{attr_name: data[key.value] for key, attr_name in cls.mapping.items()}
+        )
+
+
 class PinchValve(aqueduct.devices.base.obj.Device):
     """
     Class representing a pinch valve device in the Aqueduct system.
     """
+
+    @property
+    def live(self) -> Tuple[PinchValveLive]:
+        """
+        Get the live data of the pinch valve.
+
+        Returns:
+            Tuple[PinchValveLive]: The live data of the pinch valve as a tuple of PinchValveLive objects.
+        """
+        return self.get_live_and_cast(PinchValveLive.from_live)
 
     def set_position(
         self,
@@ -91,4 +151,4 @@ class PinchValve(aqueduct.devices.base.obj.Device):
 
         :return: Tuple of percentage open values
         """
-        return self.extract_live_as_tuple("p")
+        return self.extract_live_as_tuple(PinchValveLiveKeys.pct_open.value)

@@ -232,8 +232,8 @@ class SetRotaryValveCommand(Command):
         return self.port, self.direction
 
 
-class SyringePumpConfig:
-    """A configuration object for a syringe pump."""
+class SyringePumpStat:
+    """A stat object for a syringe pump."""
 
     def __init__(
         self,
@@ -244,7 +244,7 @@ class SyringePumpConfig:
         valve_configuration: int,
     ):
         """
-        Initializes a SyringePumpConfig object.
+        Initializes a SyringePumpStat object.
 
         Args:
             syringe_diam_mm (float): The diameter of the syringe in millimeters.
@@ -259,6 +259,119 @@ class SyringePumpConfig:
         self.syringe_volume_ul = syringe_volume_ul
         self.valve_configuration = valve_configuration
 
+    @classmethod
+    def from_stat(cls, **data) -> "SyringePumpStat":
+        """
+        Create a SyringePumpConfig object from stat data.
+
+        Args:
+            **data: Keyword arguments representing the stat data.
+        Returns:
+            SyringePumpConfig: The created SyringePumpConfig object.
+        """
+        return SyringePumpStat(**data)
+
+
+class SyringePumpLiveKeys(enum.Enum):
+    """
+    Enum representing the keys used in SyringePumpLive serialization/deserialization.
+    """
+
+    status = "s"
+    mode = "m"
+    ul_min = "um"
+    finite_value = "fv"
+    finite_units = "fu"
+    finite_ul_target = "ft"
+    finite_ul_infused = "fi"
+    finite_ul_withdrawn = "fw"
+    position = "p"
+    position_target = "pt"
+    valve_position = "v"
+    plunger_mode = "pm"
+
+
+class SyringePumpLive:
+    """
+    The live representation of a syringe pump.
+    """
+
+    mapping = {
+        SyringePumpLiveKeys.status: "status",
+        SyringePumpLiveKeys.mode: "mode",
+        SyringePumpLiveKeys.ul_min: "ul_min",
+        SyringePumpLiveKeys.finite_value: "finite_value",
+        SyringePumpLiveKeys.finite_units: "finite_units",
+        SyringePumpLiveKeys.finite_ul_target: "finite_ul_target",
+        SyringePumpLiveKeys.finite_ul_infused: "finite_ul_infused",
+        SyringePumpLiveKeys.finite_ul_withdrawn: "finite_ul_withdrawn",
+        SyringePumpLiveKeys.position: "position",
+        SyringePumpLiveKeys.position_target: "position_target",
+        SyringePumpLiveKeys.valve_position: "valve_position",
+        SyringePumpLiveKeys.plunger_mode: "plunger_mode",
+    }
+
+    """
+    The live representation of a syringe pump.
+
+    Attributes:
+        Status (Status): The status of the syringe pump.
+        Mode (Mode): The operational mode of the syringe pump.
+        ul_min (float): The current infusion or withdrawal rate of the pump, in uL/min.
+        finite_value (float): The target volume to dispense or withdraw when operating in Finite mode.
+        finite_units (FiniteUnits): The units of the target volume in Finite mode.
+        finite_ul_target (float): The target volume to dispense or withdraw in uL when operating in Finite mode.
+        finite_ul_infused (float): The infused volume in uL when operating in Finite mode.
+        finite_ul_withdrawn (float): The withdrawn volume in uL when operating in Finite mode.
+        position (float): The plunger position of the syringe pump from 0.0 to 1.0.
+        position_target (float): The target plunger position of the syringe pump from 0.0 to 1.0.
+        valve_position (int): The valve position of the syringe pump.
+        plunger_mode (int): The plunger positioning mode of the syringe pump.
+    """
+
+    def __init__(
+        self,
+        status: Status,
+        mode: Mode,
+        ul_min: float,
+        finite_value: float,
+        finite_units: FiniteUnits,
+        finite_ul_target: float,
+        finite_ul_infused: float,
+        finite_ul_withdrawn: float,
+        position: float,
+        position_target: float,
+        valve_position: int,
+        plunger_mode: int,
+    ):
+        self.Status = status
+        self.Mode = mode
+        self.ul_min = ul_min
+        self.finite_value = finite_value
+        self.finite_units = finite_units
+        self.finite_ul_target = finite_ul_target
+        self.finite_ul_infused = finite_ul_infused
+        self.finite_ul_withdrawn = finite_ul_withdrawn
+        self.position = position
+        self.position_target = position_target
+        self.valve_position = valve_position
+        self.plunger_mode = plunger_mode
+
+    @classmethod
+    def from_live(cls, **data) -> "SyringePumpLive":
+        """
+        Create a SyringePumpLive object from live data.
+
+        Args:
+            **data: Key-value pairs representing the live data.
+
+        Returns:
+            SyringePumpLive: The created SyringePumpLive object.
+        """
+        return SyringePumpLive(
+            **{attr_name: data[key.value] for key, attr_name in cls.mapping.items()}
+        )
+
 
 class SyringePump(Device):
     """A class representing a syringe pump device.
@@ -272,19 +385,30 @@ class SyringePump(Device):
         **kwargs: Additional keyword arguments to pass to the base `Device` constructor.
     """
 
-    stat: List[SyringePumpConfig]
-
-    def __init__(self, socket, socket_lock, **kwargs):
-        super().__init__(socket, socket_lock, **kwargs)
-        self.stat = []
-        for s in kwargs.get("stat"):
-            c = SyringePumpConfig(**s)
-            self.stat.append(c)
-
     STATUS = Status
     MODE = Mode
     RATE_UNITS = RateUnits
     FINITE_UNITS = FiniteUnits
+
+    @property
+    def live(self) -> Tuple[SyringePumpLive]:
+        """
+        Get the live data of the syringe pump.
+
+        Returns:
+            Tuple[SyringePumpLive]: The live data of the syringe pump as a tuple of SyringePumpLive objects.
+        """
+        return self.get_live_and_cast(SyringePumpLive.from_live)
+
+    @property
+    def stat(self) -> Tuple[SyringePumpStat]:
+        """
+        Get the stat data of the syringe pump.
+
+        Returns:
+            Tuple[SyringePumpStat]: The stat data of the syringe pump as a tuple of SyringePumpStat objects.
+        """
+        return self.get_stat_and_cast(SyringePumpStat.from_stat)
 
     def start(
         self,
@@ -423,7 +547,7 @@ class SyringePump(Device):
         )
 
     @staticmethod
-    def make_stop_command() -> ChangeSpeedCommand:
+    def make_stop_command() -> StopCommand:
         """Helper method to create an instance of a :class:`StopCommand`.
 
         A :class:`StopCommand` is an object with the required fields to stop a pump input.
@@ -465,50 +589,67 @@ class SyringePump(Device):
         """
         Get the current displacement rate, in uL/min, for each pump.
 
-        :Example: read all balances:
-
-        .. code-block:: python
-
-            ul_min = pump.get_ul_min()
-            len(ul_min) # == pump.len
-
         :return: uL/min
         :rtype: Tuple[float]
         """
-        return self.extract_live_as_tuple("um")
+        return self.extract_live_as_tuple(SyringePumpLiveKeys.ul_min.value)
+
+    def get_plunger_position(self) -> Tuple[float]:
+        """
+        Get the current plunger position for each pump.
+
+        The plunger position of the syringe pump, from 0. to 1.
+
+        A value of `0.` indicates that the pump is in the fully infused
+        position.
+
+        A value of `1.` indicates that the pump is in the fully
+        withdrawn position.
+
+        :return: plunger position
+        :rtype: Tuple[float]
+        """
+        return self.extract_live_as_tuple(SyringePumpLiveKeys.position.value)
+
+    def get_plunger_position_volume(self) -> Tuple[float]:
+        """
+        Get the current plunger position in uL.
+
+        :return: plunger position
+        :rtype: Tuple[float]
+        """
+        plunger_position = self.get_plunger_position()
+        volume = [
+            v * self.stat[i].syringe_volume_ul for i, v in enumerate(plunger_position)
+        ]
+        return tuple(volume)
 
     def get_status(self) -> Tuple[Status]:
         """
         Get all of the pump input statuses.
 
-        :Example: read all statuses:
-
-        .. code-block:: python
-
-            status = pump.get_status()
-            len(state) # == pump.len
-            print(status[2]) # ==
-
         :return: status
         :rtype: Tuple[Status]
         """
-        cast_function = lambda s: Status(int(s))
-        return self.extract_live_as_tuple("s", cast_function)
+
+        def cast_function(s):
+            return Status(int(s))
+
+        return self.extract_live_as_tuple(
+            SyringePumpLiveKeys.status.value, cast_function
+        )
 
     def get_active(self) -> Tuple[bool]:
         """
         Get all of the pump input statuses.
 
-        :Example: read all statuses:
-
-        .. code-block:: python
-
-            active = pump.get_active()
-            len(state) # == pump.len
-            print(active[2]) # ==
-
         :return: active
         :rtype: Tuple[bool]
         """
-        cast_function = lambda s: s in (Status.Infusing, Status.Withdrawing)
-        return self.extract_live_as_tuple("s", cast_function)
+
+        def cast_function(s):
+            return s in (Status.Infusing, Status.Withdrawing)
+
+        return self.extract_live_as_tuple(
+            SyringePumpLiveKeys.status.value, cast_function
+        )

@@ -21,11 +21,53 @@ The example demonstrates how to use the `PhProbe` class to perform
 operations such as calibrating the pH probe, obtaining a single
  pH reading, and retrieving all pH readings from the pH probe.
 """
+import enum
 from typing import List
 from typing import Tuple
 from typing import Union
 
 from aqueduct.devices.base.obj import Device
+
+
+class PhProbeLiveKeys(enum.Enum):
+    ph = "v"
+
+
+class PhProbeLive:
+    """
+    The live representation of a pH probe.
+
+    Attributes:
+        ph (float): The pH reading from the probe.
+    """
+
+    mapping = {
+        PhProbeLiveKeys.ph: "ph",
+    }
+
+    def __init__(self, ph: float):
+        """
+        Initialize a PhProbeLive instance.
+
+        Args:
+            ph (float): The pH reading from the probe.
+        """
+        self.ph = ph
+
+    @classmethod
+    def from_live(cls, **data) -> "PhProbeLive":
+        """
+        Create a PhProbeLive instance from the provided live data.
+
+        Args:
+            data: The live data of the pH probe.
+
+        Returns:
+            PhProbeLive: The created PhProbeLive instance.
+        """
+        return PhProbeLive(
+            **{attr_name: data[key.value] for key, attr_name in cls.mapping.items()}
+        )
 
 
 class PhProbe(Device):
@@ -44,6 +86,16 @@ class PhProbe(Device):
     def __init__(self, socket, socket_lock, **kwargs):
         super().__init__(socket, socket_lock, **kwargs)
         self.has_sim_values = True
+
+    @property
+    def live(self) -> Tuple[PhProbeLive]:
+        """
+        Get the live data of the pH probe device.
+
+        Returns:
+            Tuple[PhProbeLive]: The live data of the pH probe device as a tuple of PhProbeLive objects.
+        """
+        return self.get_live_and_cast(PhProbeLive.from_live)
 
     def value(self, index: int = 0):
         """
@@ -75,7 +127,7 @@ class PhProbe(Device):
         :return: A tuple of pH values.
         :rtype: tuple[float]
         """
-        return self.extract_live_as_tuple("v")
+        return self.extract_live_as_tuple(PhProbeLiveKeys.ph.value)
 
     @property
     def ph(self):  # pylint: disable=invalid-name

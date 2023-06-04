@@ -12,9 +12,61 @@ Methods:
         Get the optical density, transmitted intensity, and 90 degree
         scattered intensity values for all connected probes.
 """
+import enum
 from typing import Tuple
 
 import aqueduct.devices.base.obj
+
+
+class OpticalDensityProbeLiveKeys(enum.Enum):
+    od = "od"
+    transmitted = "t"
+    ninety_deg = "n"
+
+
+class OpticalDensityProbeLive:
+    """
+    The live representation of an optical density probe.
+
+    Attributes:
+        od (float): The optical density reading value of the probe (dimensionless).
+        transmitted (float): The transmitted intensity value from the probe (counts).
+        ninety_deg (float): The 90 degree scattered intensity value from the probe (counts).
+    """
+
+    mapping = {
+        OpticalDensityProbeLiveKeys.od: "od",
+        OpticalDensityProbeLiveKeys.transmitted: "transmitted",
+        OpticalDensityProbeLiveKeys.ninety_deg: "ninety_deg",
+    }
+
+    def __init__(self, od: float, transmitted: float, ninety_deg: float):
+        """
+        Initialize an OpticalDensityProbeLive instance.
+
+        Args:
+            od (float): The optical density reading value of the probe (dimensionless).
+            transmitted (float): The transmitted intensity value from the probe (counts).
+            ninety_deg (float): The 90 degree scattered intensity value from the probe (counts).
+        """
+        self.od = od
+        self.transmitted = transmitted
+        self.ninety_deg = ninety_deg
+
+    @classmethod
+    def from_live(cls, **data) -> "OpticalDensityProbeLive":
+        """
+        Create an OpticalDensityProbeLive instance from the provided live data.
+
+        Args:
+            data: The live data of the optical density probe.
+
+        Returns:
+            OpticalDensityProbeLive: The created OpticalDensityProbeLive instance.
+        """
+        return OpticalDensityProbeLive(
+            **{attr_name: data[key.value] for key, attr_name in cls.mapping.items()}
+        )
 
 
 class OpticalDensityProbe(aqueduct.devices.base.obj.Device):
@@ -36,6 +88,16 @@ class OpticalDensityProbe(aqueduct.devices.base.obj.Device):
         super().__init__(socket, socket_lock, **kwargs)
         self.has_sim_values = True
 
+    @property
+    def live(self) -> Tuple[OpticalDensityProbeLive]:
+        """
+        Get the live data of the optical density probe device.
+
+        Returns:
+            Tuple[OpticalDensityProbeLive]: The live data of the optical density probe device as a tuple of OpticalDensityProbeLive objects.
+        """
+        return self.get_live_and_cast(OpticalDensityProbeLive.from_live)
+
     def value(self, index: int = 0):
         """Get the optical density, transmitted, and 90 degree scattered intensity values from an optical density probe.
 
@@ -49,8 +111,8 @@ class OpticalDensityProbe(aqueduct.devices.base.obj.Device):
         Raises:
             IndexError: If the given index is out of range.
         """
-        live = self.get_live()
-        return (live[index].get("od"), live[index].get("t"), live[index].get("n"))
+        l = self.live
+        return (l[index].od, l[index].transmitted, l[index].ninety_deg)
 
     def get_value(self, index: int = 0):
         """Alias for the `value` method.
@@ -74,7 +136,13 @@ class OpticalDensityProbe(aqueduct.devices.base.obj.Device):
             A tuple of tuples, where each inner tuple contains the optical density, transmitted, and 90 degree
             scattered intensity values, respectively, for a single probe.
         """
-        return self.extract_live_as_tuple_of_tuples(("od", "t", "n"))
+        return self.extract_live_as_tuple_of_tuples(
+            (
+                OpticalDensityProbeLiveKeys.od.value,
+                OpticalDensityProbeLiveKeys.transmitted.value,
+                OpticalDensityProbeLiveKeys.ninety_deg.value,
+            )
+        )
 
     @property
     def optical_density(self) -> Tuple[float]:  # pylint: disable=invalid-name

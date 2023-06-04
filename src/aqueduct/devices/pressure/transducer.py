@@ -24,7 +24,9 @@ The example demonstrates how to use the `PressureTransducer` class to perform
 operations such as taring the pressure transducer, obtaining
 a single pressure reading, and retrieving all pressure readings from the pressure transducer.
 """
+import enum
 from typing import List
+from typing import Optional
 from typing import Tuple
 from typing import Union
 
@@ -33,6 +35,47 @@ from aqueduct.core.socket_constants import Actions
 from aqueduct.core.units import convert_pressure_values
 from aqueduct.core.units import get_pressure_conversion
 from aqueduct.core.units import PressureUnits
+
+
+class PressureTransducerLiveKeys(enum.Enum):
+    torr = "v"
+
+
+class PressureTransducerLive:
+    """
+    The live representation of a pressure transducer.
+
+    Attributes:
+        torr (Optional[float]): The reading from the transducer in units of torr.
+    """
+
+    mapping = {
+        PressureTransducerLiveKeys.torr: "torr",
+    }
+
+    def __init__(self, torr: Optional[float]):
+        """
+        Initialize a PressureTransducerLive instance.
+
+        Args:
+            torr (Optional[float]): The reading from the transducer in units of torr.
+        """
+        self.torr = torr
+
+    @classmethod
+    def from_live(cls, **data) -> "PressureTransducerLive":
+        """
+        Create a PressureTransducerLive instance from the provided live data.
+
+        Args:
+            data: The live data of the pressure transducer.
+
+        Returns:
+            PressureTransducerLive: The created PressureTransducerLive instance.
+        """
+        return PressureTransducerLive(
+            **{attr_name: data[key.value] for key, attr_name in cls.mapping.items()}
+        )
 
 
 class PressureTransducer(aqueduct.devices.base.obj.Device):
@@ -48,6 +91,16 @@ class PressureTransducer(aqueduct.devices.base.obj.Device):
     def __init__(self, socket, socket_lock, **kwargs):
         super().__init__(socket, socket_lock, **kwargs)
         self.has_sim_values = True
+
+    @property
+    def live(self) -> Tuple[PressureTransducerLive]:
+        """
+        Get the live data of the pressure transducer device.
+
+        Returns:
+            Tuple[PressureTransducerLive]: The live data of the pressure transducer device as a tuple of PressureTransducerLive objects.
+        """
+        return self.get_live_and_cast(PressureTransducerLive.from_live)
 
     def tare(self, index: int = 0, record: Union[bool, None] = None):
         """
@@ -96,7 +149,7 @@ class PressureTransducer(aqueduct.devices.base.obj.Device):
         :return: The pressure values (in torr) for all inputs as a tuple.
         :rtype: Tuple[float]
         """
-        return self.extract_live_as_tuple("v")
+        return self.extract_live_as_tuple(PressureTransducerLiveKeys.torr.value)
 
     @property
     def torr(self):

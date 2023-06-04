@@ -202,7 +202,7 @@ class Input:
                 sock=self._aq.socket,
                 lock=self._aq.socket_lock,
                 response=Events.GET_RECIPE_INPUT_VALUE.value,
-                size=4096*8,
+                size=4096 * 8,
             )
 
             try:

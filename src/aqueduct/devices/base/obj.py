@@ -258,7 +258,7 @@ class Device:
                     self._socket.settimeout(0.5)
                     self._socket.send(message)
                     time.sleep(SOCKET_DELAY_S)
-                    data = self._socket.recv(1024 * 8)
+                    data = self._socket.recv(4096 * 8)
                 j = json.loads(data)
                 if j[0] == Events.GET_DEVICE.value:
                     data = json.loads(j[1]).get("device")
@@ -296,6 +296,50 @@ class Device:
             i += 1
 
     T = TypeVar("T")
+
+    def get_live_and_cast(self, cast: Callable) -> tuple:
+        """
+        Get the live data and cast it using the provided casting function.
+
+        :param cast: The casting function to apply to each live data entry.
+        :type cast: Callable
+        :return: The casted live data as a tuple.
+        :rtype: tuple
+        """
+        live = []
+        for i in self.get_live():
+            live.append(cast(**i))
+        return tuple(live)
+
+    def get_stat_and_cast(self, cast: Callable) -> tuple:
+        """
+        Get the stat data and cast it using the provided casting function.
+
+        :param cast: The casting function to apply to each stat data entry.
+        :type cast: Callable
+        :return: The casted stat data as a tuple.
+        :rtype: tuple
+        """
+        stat = []
+        v = self.get()
+        for i in v.get("stat"):
+            stat.append(cast(**i))
+        return tuple(stat)
+
+    def get_config_and_cast(self, cast: Callable) -> tuple:
+        """
+        Get the config data and cast it using the provided casting function.
+
+        :param cast: The casting function to apply to each config data entry.
+        :type cast: Callable
+        :return: The casted config data as a tuple.
+        :rtype: tuple
+        """
+        config = []
+        v = self.get()
+        for i in v.get("config"):
+            config.append(cast(**i))
+        return tuple(config)
 
     def extract_live_as_tuple(
         self, key: str, cast: Callable[[str], T] = None

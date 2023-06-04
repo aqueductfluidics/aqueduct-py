@@ -19,6 +19,7 @@ Example usage:
     weights = balance.get_all_values()
 
 """
+import enum
 from typing import List
 from typing import Tuple
 from typing import Union
@@ -28,6 +29,47 @@ from aqueduct.core.socket_constants import Actions
 from aqueduct.core.units import convert_weight_values
 from aqueduct.core.units import get_weight_conversion
 from aqueduct.core.units import WeightUnits
+
+
+class BalanceLiveKeys(enum.Enum):
+    grams = "g"
+
+
+class BalanceLive:
+    """
+    The live representation of a balance.
+
+    Attributes:
+        grams (float): The weight reading value of the balance in grams.
+    """
+
+    mapping = {
+        BalanceLiveKeys.grams: "grams",
+    }
+
+    def __init__(self, grams: float):
+        """
+        Initialize a BalanceLive instance.
+
+        Args:
+            grams (float): The weight reading value of the balance in grams.
+        """
+        self.grams = grams
+
+    @classmethod
+    def from_live(cls, **data) -> "BalanceLive":
+        """
+        Create a BalanceLive instance from the provided live data.
+
+        Args:
+            data: The live data of the balance.
+
+        Returns:
+            BalanceLive: The created BalanceLive instance.
+        """
+        return BalanceLive(
+            **{attr_name: data[key.value] for key, attr_name in cls.mapping.items()}
+        )
 
 
 class Balance(aqueduct.devices.base.obj.Device):
@@ -43,6 +85,16 @@ class Balance(aqueduct.devices.base.obj.Device):
     def __init__(self, socket, socket_lock, **kwargs):
         super().__init__(socket, socket_lock, **kwargs)
         self.has_sim_values = True
+
+    @property
+    def live(self) -> Tuple[BalanceLive]:
+        """
+        Get the live data of a balance device.
+
+        Returns:
+            Tuple[BalanceLive]: The live data of a balance device as a tuple of BalanceLive objects.
+        """
+        return self.get_live_and_cast(BalanceLive.from_live)
 
     def tare(self, index: int = 0, record: Union[bool, None] = None):
         """
@@ -86,7 +138,7 @@ class Balance(aqueduct.devices.base.obj.Device):
         :return: weight values for all inputs
         :rtype: tuple of floats
         """
-        return self.extract_live_as_tuple("g")
+        return self.extract_live_as_tuple(BalanceLiveKeys.grams.value)
 
     @property
     def grams(self) -> Tuple[float]:
