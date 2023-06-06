@@ -9,6 +9,7 @@ import time
 from abc import ABC
 from abc import abstractmethod
 from typing import Callable
+from typing import List
 from typing import TypeVar
 
 from aqueduct.core.socket_constants import Actions
@@ -110,6 +111,87 @@ class CommandPayload:
             "action": self.action,
             "command": self.command,
         }
+
+
+T = TypeVar("T")
+
+
+class Config(ABC):
+    """
+    Abstract base class for configuration objects.
+
+    Attributes:
+        data (List[T]): The configuration data.
+        protocol (int): The protocol value.
+    """
+
+    def __init__(self, data: list[T], protocol: int):
+        """
+        Initialize a Config object.
+
+        Args:
+            data (List[T]): The configuration data.
+            protocol (int): The protocol value.
+        """
+        self.data = data
+        self.protocol = protocol
+
+    @abstractmethod
+    def get_data(self) -> list[T]:
+        """
+        Get the configuration data.
+
+        Returns:
+            List[T]: The configuration data.
+        """
+
+    @abstractmethod
+    def get_protocol(self) -> int:
+        """
+        Get the protocol value.
+
+        Returns:
+            int: The protocol value.
+        """
+
+
+class DeviceConfig(ABC):
+    """
+    Abstract base class for device configuration objects.
+
+    Attributes:
+        config (Config): The configuration object.
+        device_type (str): The type of the device.
+    """
+
+    def __init__(self, config: Config, type: str):  # pylint: disable=redefined-builtin
+        """
+        Initialize a DeviceConfig object.
+
+        Args:
+            config (Config): The configuration object.
+            device_type (str): The type of the device.
+        """
+        self.config = config
+        self.device_type = type
+
+    @abstractmethod
+    def get_config(self) -> Config:
+        """
+        Get the configuration object.
+
+        Returns:
+            Config: The configuration object.
+        """
+
+    @abstractmethod
+    def get_type(self) -> str:
+        """
+        Get the type of the device.
+
+        Returns:
+            str: The type of the device.
+        """
 
 
 class Device:
@@ -340,6 +422,53 @@ class Device:
         for i in v.get("config"):
             config.append(cast(**i))
         return tuple(config)
+
+    def get_config(self) -> Config:
+        """
+        Get the config data.
+
+        :return: The casted config data as a tuple.
+        :rtype: tuple
+        """
+        v = self.get()
+        v = v.get("config")
+        return self.extract_config(v)
+
+    def extract_config(self, data):
+        """
+        Recursively extract the configuration data from a nested dictionary.
+
+        Args:
+            data (dict): The dictionary to extract the configuration data from.
+
+        Returns:
+            dict or None: The extracted configuration data if found, or None if not found.
+        """
+        if isinstance(data, dict):
+            if "config" in data and "type" in data:
+                config_data = self.extract_config_data(data["config"])
+                if config_data is not None:
+                    return data
+            for value in data.values():
+                config_data = self.extract_config(value)
+                if config_data:
+                    return config_data
+        return None
+
+    def extract_config_data(self, data):
+        """
+        Recursively extract the configuration data from a nested dictionary.
+
+        Args:
+            data (dict): The dictionary to extract the configuration data from.
+
+        Returns:
+            dict or None: The extracted configuration data if found, or None if not found.
+        """
+        if isinstance(data, dict):
+            if "data" in data and "protocol" in data:
+                return data
+        return None
 
     def extract_live_as_tuple(
         self, key: str, cast: Callable[[str], T] = None

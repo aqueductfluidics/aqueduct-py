@@ -130,6 +130,10 @@ class ChangeSpeedCommand(Command):
 
 
 class PeristalticPumpLiveKeys(enum.Enum):
+    """
+    Enum representing the keys used in PeristalticPumpLive serialization/deserialization.
+    """
+
     ml_target = "mt"
     ml_done = "md"
     ml_min = "mm"

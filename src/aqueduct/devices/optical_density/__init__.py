@@ -19,6 +19,10 @@ import aqueduct.devices.base.obj
 
 
 class OpticalDensityProbeLiveKeys(enum.Enum):
+    """
+    Enum representing the keys used in OpticalDensityProbeLive serialization/deserialization.
+    """
+
     od = "od"
     transmitted = "t"
     ninety_deg = "n"

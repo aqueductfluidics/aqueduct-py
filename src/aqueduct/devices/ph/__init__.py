@@ -30,6 +30,10 @@ from aqueduct.devices.base.obj import Device
 
 
 class PhProbeLiveKeys(enum.Enum):
+    """
+    Enum representing the keys used in PhProbeLive serialization/deserialization.
+    """
+
     ph = "v"
 
 

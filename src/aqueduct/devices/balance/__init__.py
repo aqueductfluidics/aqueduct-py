@@ -32,6 +32,10 @@ from aqueduct.core.units import WeightUnits
 
 
 class BalanceLiveKeys(enum.Enum):
+    """
+    Enum representing the keys used in BalanceLive serialization/deserialization.
+    """
+
     grams = "g"
 
 

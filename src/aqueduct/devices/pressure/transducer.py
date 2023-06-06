@@ -38,6 +38,10 @@ from aqueduct.core.units import PressureUnits
 
 
 class PressureTransducerLiveKeys(enum.Enum):
+    """
+    Enum representing the keys used in PressureTransducerLive serialization/deserialization.
+    """
+
     torr = "v"
 
 
