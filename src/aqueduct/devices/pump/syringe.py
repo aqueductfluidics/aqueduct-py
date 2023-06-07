@@ -103,6 +103,15 @@ class FiniteUnits(enum.IntEnum):
     Ml = 1
 
 
+# pylint: disable=invalid-name
+class ResolutionMode(enum.IntEnum):
+    """Units used when setting the plunger resolution mode."""
+
+    N0 = 0
+    N1 = 1
+    N2 = 2
+
+
 class StartCommand(Command):
     """A command to start a pump input.
 
@@ -230,6 +239,35 @@ class SetRotaryValveCommand(Command):
             Tuple[int, Union[int, None]]: The port and direction to set the rotary valve.
         """
         return self.port, self.direction
+
+
+class SetPlungerResolutionCommand(Command):
+    """A command to set the plunger resolution mode of a syringe pump.
+
+    Args:
+        mode (ResolutionMode): Plunger resolution mode for the command.
+
+    Attributes:
+        mode (ResolutionMode): Plunger resolution mode for the command.
+    """
+
+    mode: ResolutionMode
+
+    def __init__(self, mode: ResolutionMode):
+        """Initialize the SetPlungerResolutionCommand instance.
+
+        Args:
+            mode (ResolutionMode): Plunger resolution mode for the command.
+        """
+        self.mode = mode
+
+    def to_command(self):
+        """Convert the SetPlungerResolutionCommand instance to a command tuple.
+
+        Returns:
+            int: The plunger resolution mode.
+        """
+        return self.mode.value
 
 
 class SyringePumpStat:
@@ -436,7 +474,8 @@ class SyringePump(Device):
         :rtype: None
         """
         commands = self.map_commands(commands)
-        payload = self.to_payload(Actions.Start, {"commands": commands}, record)
+        payload = self.to_payload(
+            Actions.Start, {"commands": commands}, record)
         self.send_command(payload)
 
     def change_speed(
@@ -462,7 +501,8 @@ class SyringePump(Device):
         :rtype: None
         """
         commands = self.map_commands(commands)
-        payload = self.to_payload(Actions.ChangeSpeed, {"commands": commands}, record)
+        payload = self.to_payload(Actions.ChangeSpeed, {
+                                  "commands": commands}, record)
         self.send_command(payload)
 
     def stop(
@@ -517,10 +557,30 @@ class SyringePump(Device):
         :return: None
         :rtype: None
         """
-        commands = [c.to_command() if c is not None else None for c in commands]
+        commands = self.map_commands(commands)
 
         payload = self.to_payload(
             Actions.SetValvePosition,
+            {"commands": commands},
+        )
+        self.send_command(payload)
+
+    def set_plunger_mode(
+        self,
+        commands: Union[List[Union[SetPlungerResolutionCommand, None]], None] = None,
+    ) -> dict:
+        """Set the plunger mode for one or more pump inputs.
+
+        :param commands: List of plunger mode commands for each pump input.
+        :type commands: Union[List[Union[SetPlungerResolutionCommand, None]], None]
+
+        :return: The response payload.
+        :rtype: dict
+        """
+        commands = self.map_commands(commands)
+
+        payload = self.to_payload(
+            Actions.SetPlunger,
             {"commands": commands},
         )
         self.send_command(payload)
@@ -584,6 +644,13 @@ class SyringePump(Device):
         :rtype: PumpCommand
         """
         return SetRotaryValveCommand(port, direction)
+
+    @staticmethod
+    def make_set_plunger_mode_command(
+        mode: ResolutionMode
+    ) -> SetPlungerResolutionCommand:
+
+        return SetPlungerResolutionCommand(mode)
 
     def get_ul_min(self) -> Tuple[float]:
         """

@@ -57,3 +57,5 @@ class Actions(enum.IntEnum):
     SetValvePosition = 6
     Tare = 7
     SetCalibration = 8
+    Initialize = 9
+    SetPlunger = 10
