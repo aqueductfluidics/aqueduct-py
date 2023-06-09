@@ -720,7 +720,7 @@ class SyringePump(Device):
         return self.extract_live_as_tuple(
             SyringePumpLiveKeys.status.value, cast_function
         )
-    
+
     def get_max_flow_rate_ul_min(self) -> Tuple[float]:
         """
         Get the maximum flow rate in microliters per minute for each pump.
@@ -731,7 +731,7 @@ class SyringePump(Device):
 
         config = self.get_config()
         values = [1000000.0] * self.len
-        
+
         if config is None:
             return values
 
@@ -743,12 +743,14 @@ class SyringePump(Device):
                 pump_series = d.get("pump_series")
                 resolution = live[i].plunger_mode
                 syringe_volume_ul = stat[i].syringe_volume_ul
-                value = tricontinent.max_rate_ul_min(pump_series, resolution, syringe_volume_ul)
+                value = tricontinent.max_rate_ul_min(
+                    pump_series, resolution, syringe_volume_ul
+                )
                 if value is not None:
                     values[i] = value
 
         return tuple(values)
-    
+
     def get_min_flow_rate_ul_min(self) -> Tuple[float]:
         """
         Get the minimum flow rate in microliters per minute for each pump.
@@ -772,7 +774,9 @@ class SyringePump(Device):
                 resolution = live[i].plunger_mode
                 syringe_volume_ul = stat[i].syringe_volume_ul
 
-                value = tricontinent.min_rate_ul_min(pump_series, resolution, syringe_volume_ul)
+                value = tricontinent.min_rate_ul_min(
+                    pump_series, resolution, syringe_volume_ul
+                )
                 if value is not None:
                     values[i] = value
 

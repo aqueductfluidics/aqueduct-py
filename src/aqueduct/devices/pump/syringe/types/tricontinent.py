@@ -6,13 +6,16 @@ class PumpSeries(enum.IntEnum):
     """
     Enum representing the series of a pump.
     """
+
     CX6000 = 0
     CX48000 = 1
     C3000 = 2
     C24000 = 3
 
 
-def min_rate_ul_min(pump_series: int, resolution: int, syringe_volume_ul: float) -> Union[float, None]:
+def min_rate_ul_min(
+    pump_series: int, resolution: int, syringe_volume_ul: float
+) -> Union[float, None]:
     """
     Calculate the minimum flow rate in microliters per minute based on the pump series, resolution, and syringe volume.
 
@@ -38,7 +41,9 @@ def min_rate_ul_min(pump_series: int, resolution: int, syringe_volume_ul: float)
     return None
 
 
-def max_rate_ul_min(pump_series: int, resolution: int, syringe_volume_ul: float) -> Union[float, None]:
+def max_rate_ul_min(
+    pump_series: int, resolution: int, syringe_volume_ul: float
+) -> Union[float, None]:
     """
     Calculate the maximum flow rate in microliters per minute based on the pump series, resolution, and syringe volume.
 

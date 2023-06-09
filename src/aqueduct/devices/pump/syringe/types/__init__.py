@@ -5,4 +5,5 @@ class Config(enum.Enum):
     """
     Enum representing the configuration types.
     """
+
     TriContinent = "TriContinent"
