@@ -102,7 +102,8 @@ class PressureTransducer(aqueduct.devices.base.obj.Device):
         Get the live data of the pressure transducer device.
 
         Returns:
-            Tuple[PressureTransducerLive]: The live data of the pressure transducer device as a tuple of PressureTransducerLive objects.
+            Tuple[PressureTransducerLive]: The live data of the pressure transducer
+            device as a tuple of PressureTransducerLive objects.
         """
         return self.get_live_and_cast(PressureTransducerLive.from_live)
 

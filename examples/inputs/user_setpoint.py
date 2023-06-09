@@ -1,11 +1,11 @@
 import time
 
 from aqueduct.core.aq import Aqueduct
+from aqueduct.core.aq import InitParams
 
-aq = Aqueduct()
-aq.initialize()
-
-aq.initialize()
+params = InitParams.parse()
+aq = Aqueduct(params.user_id, params.ip_address, params.port)
+aq.initialize(params.init)
 
 sf = aq.setpoint(
     name="testing_float",

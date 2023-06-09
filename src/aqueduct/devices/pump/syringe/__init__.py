@@ -49,6 +49,8 @@ from aqueduct.core.socket_constants import Actions
 from aqueduct.devices.base.obj import Command
 from aqueduct.devices.base.obj import Device
 
+from .types import Config
+from .types import tricontinent
 
 # pylint: disable=invalid-name
 class Mode(enum.IntEnum):
@@ -353,8 +355,8 @@ class SyringePumpLive:
     The live representation of a syringe pump.
 
     Attributes:
-        Status (Status): The status of the syringe pump.
-        Mode (Mode): The operational mode of the syringe pump.
+        status (Status): The status of the syringe pump.
+        mode (Mode): The operational mode of the syringe pump.
         ul_min (float): The current infusion or withdrawal rate of the pump, in uL/min.
         finite_value (float): The target volume to dispense or withdraw when operating in Finite mode.
         finite_units (FiniteUnits): The units of the target volume in Finite mode.
@@ -382,8 +384,8 @@ class SyringePumpLive:
         valve_position: int,
         plunger_mode: int,
     ):
-        self.Status = status
-        self.Mode = mode
+        self.status = status
+        self.mode = mode
         self.ul_min = ul_min
         self.finite_value = finite_value
         self.finite_units = finite_units
@@ -474,8 +476,7 @@ class SyringePump(Device):
         :rtype: None
         """
         commands = self.map_commands(commands)
-        payload = self.to_payload(
-            Actions.Start, {"commands": commands}, record)
+        payload = self.to_payload(Actions.Start, {"commands": commands}, record)
         self.send_command(payload)
 
     def change_speed(
@@ -501,8 +502,7 @@ class SyringePump(Device):
         :rtype: None
         """
         commands = self.map_commands(commands)
-        payload = self.to_payload(Actions.ChangeSpeed, {
-                                  "commands": commands}, record)
+        payload = self.to_payload(Actions.ChangeSpeed, {"commands": commands}, record)
         self.send_command(payload)
 
     def stop(
@@ -647,7 +647,7 @@ class SyringePump(Device):
 
     @staticmethod
     def make_set_plunger_mode_command(
-        mode: ResolutionMode
+        mode: ResolutionMode,
     ) -> SetPlungerResolutionCommand:
 
         return SetPlungerResolutionCommand(mode)
@@ -720,3 +720,60 @@ class SyringePump(Device):
         return self.extract_live_as_tuple(
             SyringePumpLiveKeys.status.value, cast_function
         )
+    
+    def get_max_flow_rate_ul_min(self) -> Tuple[float]:
+        """
+        Get the maximum flow rate in microliters per minute for each pump.
+
+        :return: Tuple of maximum flow rates for each pump.
+        :rtype: Tuple[float]
+        """
+
+        config = self.get_config()
+        values = [1000000.0] * self.len
+        
+        if config is None:
+            return values
+
+        if config.get("type") == Config.TriContinent.value:
+            live = self.live
+            stat = self.stat
+
+            for i, d in enumerate(config.get("config").get("data")):
+                pump_series = d.get("pump_series")
+                resolution = live[i].plunger_mode
+                syringe_volume_ul = stat[i].syringe_volume_ul
+                value = tricontinent.max_rate_ul_min(pump_series, resolution, syringe_volume_ul)
+                if value is not None:
+                    values[i] = value
+
+        return tuple(values)
+    
+    def get_min_flow_rate_ul_min(self) -> Tuple[float]:
+        """
+        Get the minimum flow rate in microliters per minute for each pump.
+
+        :return: Tuple of minimum flow rates for each pump.
+        :rtype: Tuple[float]
+        """
+
+        config = self.get_config()
+        values = [0.0] * self.len
+
+        if config is None:
+            return values
+
+        if config.get("type") == Config.TriContinent.value:
+            live = self.live
+            stat = self.stat
+
+            for i, d in enumerate(config.get("config").get("data")):
+                pump_series = d.get("pump_series")
+                resolution = live[i].plunger_mode
+                syringe_volume_ul = stat[i].syringe_volume_ul
+
+                value = tricontinent.min_rate_ul_min(pump_series, resolution, syringe_volume_ul)
+                if value is not None:
+                    values[i] = value
+
+        return tuple(values)

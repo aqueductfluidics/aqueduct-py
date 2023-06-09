@@ -18,11 +18,7 @@ To get started with the Aqueduct Fluidics Core Application, simply install it us
 pip install aqueduct-py
 ```
 
-## Installation on a Raspberry Pi
-
-```text
-python3 -m pip install -e /home/pi/aqueduct
-```
+## Testing
 
 Install with dev dependencies.
 
