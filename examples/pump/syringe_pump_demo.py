@@ -31,22 +31,25 @@ pump: SyringePump = aq.devices.get("syringe_pump_000001")
 # create a list to store the last direction used for each pump
 last_directions: List[Status] = []
 
+commands = pump.make_commands()
 # create start commands for each pump at increasing rates
 for i in range(0, pump.len):
     # create a command to set the pump to continuous mode, with a rate of i+1 ml/min, infusing
     c = pump.make_start_command(
-        mode=pump.MODE.Continuous,
+        mode=pump.MODE.Finite,
         rate_units=pump.RATE_UNITS.MlMin,
         rate_value=i + 1,
         direction=pump.STATUS.Infusing,
+        finite_units=pump.FINITE_UNITS.Ml,
+        finite_value=1.
     )
     # store the direction used for this command
     last_directions.append(pump.STATUS.Infusing)
     # set the command for this pump
-    pump.set_command(pump.make_commands(), i, c)
+    pump.set_command(commands, i, c)
 
 # start the pumps
-pump.start(pump.make_commands())
+pump.start(commands)
 
 while True:
     # get the flow rates for each pump
@@ -64,6 +67,8 @@ while True:
                 rate_units=pump.RATE_UNITS.MlMin,
                 rate_value=i + 1,
                 direction=d,
+                finite_units=pump.FINITE_UNITS.Ml,
+                finite_value=1.
             )
             # update the last direction used for this pump
             last_directions[i] = d

@@ -48,11 +48,15 @@ from typing import Union
 from aqueduct.core.socket_constants import Actions
 from aqueduct.devices.base.obj import Command
 from aqueduct.devices.base.obj import Device
+from aqueduct.devices.base.obj import DeviceConfigKeys
+from aqueduct.devices.base.obj import DeviceConfigInnerKeys
 
 from .types import Config
 from .types import tricontinent
 
 # pylint: disable=invalid-name
+
+
 class Mode(enum.IntEnum):
     """Operational Mode of the `SyringePump`. Use this value to set the operation to continuous or finite."""
 
@@ -450,6 +454,28 @@ class SyringePump(Device):
         """
         return self.get_stat_and_cast(SyringePumpStat.from_stat)
 
+    @property
+    def config(self) -> Union[tuple, None]:
+        """
+        Get the configuration data for the syringe pump device.
+
+        This property retrieves the device configuration and casts it to the appropriate types.
+
+        :return: The device configuration data.
+        :rtype: Union[tuple, None]
+        """
+        def cast_config(data):
+            if data and data.get(DeviceConfigKeys.Type.value) == Config.TriContinent.value:
+                configs = []
+                for _i, d in enumerate(data.get(DeviceConfigKeys.Config.value).get(DeviceConfigInnerKeys.Data.value)):
+                    configs.append(tricontinent.TriContinentConfig(**d))
+                data[DeviceConfigKeys.Config.value][DeviceConfigInnerKeys.Data.value] = configs
+                return data
+            else:
+                return data
+
+        return self.get_config_and_cast(cast_config)
+
     def start(
         self,
         commands: List[Union[StartCommand, None]],
@@ -476,7 +502,8 @@ class SyringePump(Device):
         :rtype: None
         """
         commands = self.map_commands(commands)
-        payload = self.to_payload(Actions.Start, {"commands": commands}, record)
+        payload = self.to_payload(
+            Actions.Start, {"commands": commands}, record)
         self.send_command(payload)
 
     def change_speed(
@@ -502,7 +529,8 @@ class SyringePump(Device):
         :rtype: None
         """
         commands = self.map_commands(commands)
-        payload = self.to_payload(Actions.ChangeSpeed, {"commands": commands}, record)
+        payload = self.to_payload(Actions.ChangeSpeed, {
+                                  "commands": commands}, record)
         self.send_command(payload)
 
     def stop(
@@ -735,12 +763,13 @@ class SyringePump(Device):
         if config is None:
             return values
 
-        if config.get("type") == Config.TriContinent.value:
+        if config.get(DeviceConfigKeys.Type.value) == Config.TriContinent.value:
             live = self.live
             stat = self.stat
 
-            for i, d in enumerate(config.get("config").get("data")):
-                pump_series = d.get("pump_series")
+            for i, d in enumerate(config.get(DeviceConfigKeys.Config.value).get(DeviceConfigInnerKeys.Data.value)):
+                pump_series = d.get(
+                    tricontinent.TriContinentConfigKeys.PumpSeries.value)
                 resolution = live[i].plunger_mode
                 syringe_volume_ul = stat[i].syringe_volume_ul
                 value = tricontinent.max_rate_ul_min(
@@ -765,12 +794,13 @@ class SyringePump(Device):
         if config is None:
             return values
 
-        if config.get("type") == Config.TriContinent.value:
+        if config.get(DeviceConfigKeys.Type.value) == Config.TriContinent.value:
             live = self.live
             stat = self.stat
 
-            for i, d in enumerate(config.get("config").get("data")):
-                pump_series = d.get("pump_series")
+            for i, d in enumerate(config.get(DeviceConfigKeys.Config.value).get(DeviceConfigInnerKeys.Data.value)):
+                pump_series = d.get(
+                    tricontinent.TriContinentConfigKeys.PumpSeries.value)
                 resolution = live[i].plunger_mode
                 syringe_volume_ul = stat[i].syringe_volume_ul
 

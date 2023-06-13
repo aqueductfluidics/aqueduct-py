@@ -9,7 +9,6 @@ import time
 from abc import ABC
 from abc import abstractmethod
 from typing import Callable
-from typing import List
 from typing import TypeVar
 
 from aqueduct.core.socket_constants import Actions
@@ -18,6 +17,43 @@ from aqueduct.core.socket_constants import SOCKET_DELAY_S
 from aqueduct.core.socket_constants import SOCKET_TX_ATTEMPTS
 from aqueduct.core.socket_constants import SocketCommands
 from aqueduct.core.utils import send_and_wait_for_rx
+
+
+# pylint: disable=invalid-name
+class DeviceKeys(enum.Enum):
+    """The keys to extract data from the Device."""
+
+    Live = "live"
+    Stat = "stat"
+    Config = "config"
+    Base = "base"
+
+
+# pylint: disable=invalid-name
+class DeviceBaseKeys(enum.Enum):
+    """The keys to extract data from the Device Base."""
+
+    DeviceId = "device_id"
+    UserId = "user_id"
+    Type = "type"
+    Name = "name"
+    Interface = "interface"
+
+
+# pylint: disable=invalid-name
+class DeviceConfigKeys(enum.Enum):
+    """The keys to extract data from the Device Config."""
+
+    Type = "type"
+    Config = "config"
+
+
+# pylint: disable=invalid-name
+class DeviceConfigInnerKeys(enum.Enum):
+    """The keys to extract data from the Device Config inner data structure."""
+
+    Data = "data"
+    Protocol = "protocol"
 
 
 # pylint: disable=invalid-name
@@ -203,12 +239,20 @@ class Device:
     def __init__(self, sock: socket.socket, socket_lock: threading.Lock, **kwargs):
         self._socket: socket.socket = sock
         self._socket_lock: threading.Lock = socket_lock
-        self._device_id: int = kwargs.get("base").get("device_id")
-        self._user_id: str = kwargs.get("base").get("user_id")
-        self._type: str = kwargs.get("base").get("type")
-        self._name: str = kwargs.get("base").get("name")
-        self._interface: Interface = kwargs.get("base").get("interface")
-        self._len: int = len(kwargs.get("live"))
+
+        self._device_id: int = kwargs.get(
+            DeviceKeys.Base.value).get(DeviceBaseKeys.DeviceId.value)
+        self._user_id: str = kwargs.get(
+            DeviceKeys.Base.value).get(DeviceBaseKeys.UserId.value)
+        self._type: str = kwargs.get(DeviceKeys.Base.value).get(
+            DeviceBaseKeys.Type.value)
+        self._name: str = kwargs.get(DeviceKeys.Base.value).get(
+            DeviceBaseKeys.Name.value)
+        self._interface: Interface = kwargs.get(
+            DeviceKeys.Base.value).get(DeviceBaseKeys.Interface.value)
+        
+        self._len: int = len(kwargs.get(DeviceKeys.Live.value))
+        
         self._command_delay: float = 0.0
         self._has_sim_values: bool = False
 
@@ -278,7 +322,8 @@ class Device:
         if index < len(commands):
             commands[index] = command
         else:
-            raise Warning("SetCommand error: command index larger than device size!")
+            raise Warning(
+                "SetCommand error: command index larger than device size!")
 
     def to_payload(
         self, action: Actions, command: dict, record: bool | None = None
@@ -300,7 +345,8 @@ class Device:
             payload = payload.to_dict()
 
         message = json.dumps(
-            [SocketCommands.SocketMessage.value, [Events.DEVICE_ACTION.value, payload]]
+            [SocketCommands.SocketMessage.value, [
+                Events.DEVICE_ACTION.value, payload]]
         ).encode()
 
         return send_and_wait_for_rx(
@@ -331,7 +377,8 @@ class Device:
         """Get the device data from the TCP socket."""
         payload = self.generate_action_payload()
         message = json.dumps(
-            [SocketCommands.SocketMessage.value, [Events.GET_DEVICE.value, payload]]
+            [SocketCommands.SocketMessage.value, [
+                Events.GET_DEVICE.value, payload]]
         ).encode()
         i = 0
         while i < SOCKET_TX_ATTEMPTS:
@@ -344,7 +391,7 @@ class Device:
                 j = json.loads(data)
                 if j[0] == Events.GET_DEVICE.value:
                     data = json.loads(j[1]).get("device")
-                    base = data.get("base")
+                    base = data.get(DeviceKeys.Base.value)
                     if self.is_for_me(base):
                         return data
             except (json.decoder.JSONDecodeError, socket.timeout) as _err:
@@ -372,7 +419,7 @@ class Device:
                 if j[0] == Events.GET_DEVICE_LIVE.value:
                     data = json.loads(j[1])
                     if self.is_for_me(data):
-                        return data.get("live")
+                        return data.get(DeviceKeys.Live.value)
             except (json.decoder.JSONDecodeError, socket.timeout) as _err:
                 continue
             i += 1
@@ -404,7 +451,7 @@ class Device:
         """
         stat = []
         v = self.get()
-        for i in v.get("stat"):
+        for i in v.get(DeviceKeys.Stat.value):
             stat.append(cast(**i))
         return tuple(stat)
 
@@ -417,11 +464,8 @@ class Device:
         :return: The casted config data as a tuple.
         :rtype: tuple
         """
-        config = []
-        v = self.get()
-        for i in v.get("config"):
-            config.append(cast(**i))
-        return tuple(config)
+        val = self.get_config()
+        return cast(val)
 
     def get_config(self) -> Config:
         """
@@ -431,7 +475,7 @@ class Device:
         :rtype: tuple
         """
         v = self.get()
-        v = v.get("config")
+        v = v.get(DeviceKeys.Config.value)
         return self.extract_config(v)
 
     def extract_config(self, data):
@@ -445,8 +489,9 @@ class Device:
             dict or None: The extracted configuration data if found, or None if not found.
         """
         if isinstance(data, dict):
-            if "config" in data and "type" in data:
-                config_data = self.extract_config_data(data["config"])
+            if DeviceConfigKeys.Config.value in data and DeviceConfigKeys.Type.value in data:
+                config_data = self.extract_config_data(
+                    data[DeviceConfigKeys.Config.value])
                 if config_data is not None:
                     return data
             for value in data.values():
@@ -466,7 +511,7 @@ class Device:
             dict or None: The extracted configuration data if found, or None if not found.
         """
         if isinstance(data, dict):
-            if "data" in data and "protocol" in data:
+            if DeviceConfigInnerKeys.Data.value in data and DeviceConfigInnerKeys.Protocol.value in data:
                 return data
         return None
 
