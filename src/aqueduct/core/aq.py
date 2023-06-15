@@ -876,10 +876,12 @@ class Aqueduct:
                 [Events.CLEAR_USER_RECORDABLES.value, dict(params=[recordable.name])],
             ]
         ).encode()
-        self._socket.settimeout(1)
-        with self._socket_lock:
-            self._socket.send(message)
-            time.sleep(SOCKET_DELAY_S)
+
+        self.send_and_wait_for_rx(
+            message,
+            Events.CLEAR_USER_RECORDABLES.value,
+            SOCKET_TX_ATTEMPTS,
+        )
 
     def handle_updated_setpoint(self, setpoint: dict):
         """

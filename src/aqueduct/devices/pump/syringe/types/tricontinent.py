@@ -77,6 +77,7 @@ class TriContinentConfigKeys(enum.Enum):
     Booted = "booted"
     CSeriesError = "c_series_error"
     PumpSeries = "pump_series"
+    Initialized = "initialized"
 
 
 class TriContinentConfig:
@@ -96,11 +97,14 @@ class TriContinentConfig:
         booted: int,
         c_series_error: int,
         pump_series: int,
+        initialized: int,
+        **_kwargs
     ):
 
         self.booted = Booted(booted)
         self.c_series_error = CSeriesError(c_series_error)
         self.pump_series = PumpSeries(pump_series)
+        self.initialized = initialized
 
     @classmethod
     def from_config(cls, **data) -> "TriContinentConfig":

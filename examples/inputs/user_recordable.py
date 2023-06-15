@@ -21,12 +21,24 @@ increment = aq.setpoint(
     dtype=float.__name__,
 )
 
+clear = aq.setpoint(
+    name="clear",
+    value=False,
+    dtype=bool.__name__,
+)
+
 f.clear()
 
 while True:
     for i in range(0, 100):
         v += increment.value
         f.update(v)
+        if clear.value == True:
+            f.clear()
+            clear.update(False)
     for i in range(0, 100):
         v -= increment.value
         f.update(v)
+        if clear.value == True:
+            f.clear()
+            clear.update(False)
