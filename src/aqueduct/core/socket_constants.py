@@ -59,3 +59,4 @@ class Actions(enum.IntEnum):
     SetCalibration = 8
     Initialize = 9
     SetPlunger = 10
+    Zero = 11

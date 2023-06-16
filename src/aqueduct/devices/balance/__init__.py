@@ -12,6 +12,9 @@ Example usage:
     # tare the balance
     balance.tare()
 
+    # zero the balance
+    balance.zero()
+
     # get a weight reading from the balance
     weight = balance.get_value()
 
@@ -111,6 +114,19 @@ class Balance(aqueduct.devices.base.obj.Device):
         commands[index] = 1
 
         payload = self.to_payload(Actions.Tare, {"commands": commands}, record)
+        self.send_command(payload)
+
+    def zero(self, index: int = 0, record: Union[bool, None] = None):
+        """
+        Send a zero command to the balance device.
+
+        :param index: number-like value to specify the input of the balance to zero
+        :type index: int
+        """
+        commands = self.len * [None]
+        commands[index] = 1
+
+        payload = self.to_payload(Actions.Zero, {"commands": commands}, record)
         self.send_command(payload)
 
     def value(self, index: int = 0):
