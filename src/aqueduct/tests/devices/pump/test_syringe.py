@@ -10,9 +10,7 @@ class TestSyringePump:
 
     def test_reverse(self) -> None:
         s = Status.Infusing
-        print(s)
         s = s.reverse()
-        print(s)
         assert s == Status.Withdrawing
         s = s.reverse()
         assert s == Status.Infusing

@@ -197,6 +197,9 @@ class Input:
                 ]
             ).encode()
 
+            # small delay
+            # time.sleep(0.05)
+
             _, data = send_and_wait_for_rx(
                 message=message,
                 sock=self._aq.socket,
@@ -206,15 +209,14 @@ class Input:
             )
 
             try:
-                v = json.loads(data)
-                v = v.get("value")
+                v = json.loads(data).get("value")
                 if self.dtype == float.__name__:
                     return float(v)
                 elif self.dtype == int.__name__:
                     return int(v)
                 else:
                     return v
-            except BaseException as _e:
+            except BaseException as _e:  # pylint: disable=broad-except
                 return None
 
     def to_json(self):

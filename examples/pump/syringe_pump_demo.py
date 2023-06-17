@@ -41,7 +41,7 @@ for i in range(0, pump.len):
         rate_value=i + 1,
         direction=pump.STATUS.Infusing,
         finite_units=pump.FINITE_UNITS.Ml,
-        finite_value=1.
+        finite_value=1.0,
     )
     # store the direction used for this command
     last_directions.append(pump.STATUS.Infusing)
@@ -68,7 +68,7 @@ while True:
                 rate_value=i + 1,
                 direction=d,
                 finite_units=pump.FINITE_UNITS.Ml,
-                finite_value=1.
+                finite_value=1.0,
             )
             # update the last direction used for this pump
             last_directions[i] = d

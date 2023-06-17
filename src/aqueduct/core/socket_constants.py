@@ -36,6 +36,7 @@ class Events(enum.Enum):
     GET_RECIPE_PROMPT = "get_recipe_prompt"
     GET_SETUP = "get_setup"
     PAUSE_RECIPE = "pause_recipe"
+    RECIPE_STATUS = "recipe_status"
     REGISTER_PROCESS = "register_process"
     SET_RECIPE_INPUT = "set_recipe_input"
     SET_RECIPE_PROMPT = "set_recipe_prompt"

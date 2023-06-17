@@ -53,6 +53,7 @@ from aqueduct.core.socket_constants import SOCKET_DELAY_S
 from aqueduct.core.socket_constants import SOCKET_TX_ATTEMPTS
 from aqueduct.core.socket_constants import SocketCommands
 from aqueduct.core.utils import send_and_wait_for_rx
+from aqueduct.core.utils import split_packets
 from aqueduct.core.utils import string_to_bool
 from aqueduct.devices.base.obj import Device
 from aqueduct.devices.base.utils import create_device
@@ -824,9 +825,10 @@ class Aqueduct:
                     self._socket.send(message)
                     time.sleep(SOCKET_DELAY_S)
                     data = self._socket.recv(1024 * 8)
-                commands = json.loads(data.replace(b"][", b","))
-                for cmd, _payload in zip(commands[::2], commands[1::2]):
-                    if cmd == Events.UPDATED_USER_PARAMS.value:
+                packets = split_packets(data)
+                for packet in packets:
+                    command = json.loads(packet)
+                    if command[0] == Events.UPDATED_USER_PARAMS.value:
                         return
             except (json.decoder.JSONDecodeError, socket.timeout) as err:
                 if self.is_debug:
@@ -1013,10 +1015,11 @@ class AqHelper:
             try:
                 while True:
                     data = self._socket.recv(1024 * 16)
-                    commands = json.loads(data.replace(b"][", b","))
-                    for cmd, payload in zip(commands[::2], commands[1::2]):
-                        if cmd == Events.UPDATED_USER_PARAMS.value:
-                            self.handle_updated_user_params(json.loads(payload))
+                    packets = split_packets(data)
+                    for packet in packets:
+                        command = json.loads(packet)
+                        if command[0] == Events.UPDATED_USER_PARAMS.value:
+                            self.handle_updated_user_params(json.loads(command[1]))
                     time.sleep(self._update_frequency_s)
             except BaseException as err:  # pylint: disable=broad-except
                 if self._aq.is_debug:
@@ -1187,11 +1190,11 @@ manager.run()
             try:
                 while True:
                     data = self._socket.recv(1024 * 16)
-                    commands = json.loads(data.replace(b"][", b","))
-                    for cmd, payload in zip(commands[::2], commands[1::2]):
-                        if cmd == "recipe_status":
-                            self.handle_recipe_status(json.loads(payload))
-
+                    packets = split_packets(data)
+                    for packet in packets:
+                        command = json.loads(packet)
+                        if command[0] == Events.RECIPE_STATUS.value:
+                            self.handle_recipe_status(json.loads(command[1]))
                     time.sleep(self._update_frequency_s)
 
             except json.JSONDecodeError as err:

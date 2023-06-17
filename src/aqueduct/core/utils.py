@@ -39,6 +39,29 @@ def string_to_bool(string: str) -> bool:
         raise TypeError(f"Could not convert {string} to a boolean value.")
 
 
+def split_packets(message: bytes) -> typing.Tuple[bytes]:
+    """
+    Split a byte string message into packets and extract the command and payload pairs.
+
+    :param message: The byte string message to be split.
+    :type message: bytes
+    :return: A tuple of tuples containing the command and payload pairs.
+    :rtype: tuple
+    """
+    if b"][" in message:
+        packets = message.split(b"][")
+
+        for i in range(len(packets)):
+            if i == 0:
+                packets[i] = packets[i] + b"]"
+            elif i == len(packets) - 1:
+                packets[i] = b"[" + packets[i]
+    else:
+        packets = (message,)
+
+    return tuple(packets)
+
+
 # pylint: disable=too-many-arguments
 def send_and_wait_for_rx(
     message: str,
@@ -87,11 +110,13 @@ def send_and_wait_for_rx(
             continue
 
         try:
-            j = json.loads(data)
-            if j[0] == response:
-                if delay_s is not None:
-                    time.sleep(delay_s)
-                return True, j[1]
+            packets = split_packets(data)
+            for packet in packets:
+                j = json.loads(packet)
+                if j[0] == response:
+                    if delay_s is not None:
+                        time.sleep(delay_s)
+                    return True, j[1]
         except (json.decoder.JSONDecodeError, IndexError):
             # Error occurred while parsing the received data as JSON, continue the loop.
             continue
