@@ -29,7 +29,7 @@ while True:
         # loop through the valve position values from 0 to 100 percent open
         for i in range(0, 100):
             commands = pinch_valve.make_commands()
-            c = pinch_valve.make_set_poisition_command(pct_open=i / 100.0)
+            c = pinch_valve.make_set_position_command(pct_open=i / 100.0)
             pinch_valve.set_command(commands, 0, c)
             pinch_valve.set_position(commands, record=True)
             print(pinch_valve.get_pct_open())
@@ -38,7 +38,7 @@ while True:
         # loop through the valve position values from 100 to 0 percent open
         for i in range(100, 0, -1):
             commands = pinch_valve.make_commands()
-            c = pinch_valve.make_set_poisition_command(pct_open=i / 100.0)
+            c = pinch_valve.make_set_position_command(pct_open=i / 100.0)
             pinch_valve.set_command(commands, 0, c)
             pinch_valve.set_position(commands, record=True)
             print(pinch_valve.get_pct_open())
