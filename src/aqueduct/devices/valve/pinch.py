@@ -135,7 +135,7 @@ class PinchValve(aqueduct.devices.base.obj.Device):
             raise Warning("PinchValve: command index larger than device size!")
 
     @staticmethod
-    def make_set_poisition_command(pct_open: float) -> SetPositionCommand:
+    def make_set_position_command(pct_open: float) -> SetPositionCommand:
         """
         Helper method to create a SetPositionCommand object.
 
