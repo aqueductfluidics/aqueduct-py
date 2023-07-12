@@ -10,6 +10,7 @@ from abc import ABC
 from abc import abstractmethod
 from typing import Callable
 from typing import TypeVar
+from typing import Optional
 
 from aqueduct.core.socket_constants import Actions
 from aqueduct.core.socket_constants import Events
@@ -327,7 +328,8 @@ class Device:
         if index < len(commands):
             commands[index] = command
         else:
-            raise Warning("SetCommand error: command index larger than device size!")
+            raise Warning(
+                "SetCommand error: command index larger than device size!")
 
     def to_payload(
         self, action: Actions, command: dict, record: bool | None = None
@@ -349,7 +351,8 @@ class Device:
             payload = payload.to_dict()
 
         message = json.dumps(
-            [SocketCommands.SocketMessage.value, [Events.DEVICE_ACTION.value, payload]]
+            [SocketCommands.SocketMessage.value, [
+                Events.DEVICE_ACTION.value, payload]]
         ).encode()
 
         return send_and_wait_for_rx(
@@ -380,7 +383,8 @@ class Device:
         """Get the device data from the TCP socket."""
         payload = self.generate_action_payload()
         message = json.dumps(
-            [SocketCommands.SocketMessage.value, [Events.GET_DEVICE.value, payload]]
+            [SocketCommands.SocketMessage.value, [
+                Events.GET_DEVICE.value, payload]]
         ).encode()
         i = 0
         while i < SOCKET_TX_ATTEMPTS:
@@ -609,6 +613,7 @@ class Device:
         roc: list[float | None] | tuple | None,
         noise: list[float | None] | tuple | None,
         scale: float = 1.0,
+        conversion_func: Optional[Callable[[float], float]] = None,
     ):
         """
         Sets the simulated data for the device.
@@ -619,6 +624,8 @@ class Device:
         :type roc: list[float | None] | tuple | None
         :param noise: The noise values for the simulated data.
         :type noise: list[float | None] | tuple | None
+        :param conversion_func: Optional conversion function to apply to the values. Default is None.
+        :type conversion_func: Callable[[float], float], optional
         :param scale: Optional scaling factor for unit conversion. Default is 1.0.
         :type scale: float, optional
         :raises Warning: If the device does not have simulated values.
@@ -626,22 +633,26 @@ class Device:
         if self.has_sim_values:
             v_t = []
             for i in range(0, self.len):
-                v_v = (
-                    values[i] * scale
-                    if values and i < len(values) and values[i] is not None
-                    else None
-                )
-                r_c = (
-                    roc[i] * scale
-                    if roc and i < len(roc) and roc[i] is not None
-                    else None
-                )
-                n_v = (
-                    noise[i] * scale
-                    if noise and i < len(noise) and noise[i] is not None
-                    else None
-                )
-                v_t.append((v_v, r_c, n_v))
+                value = values[i] if values and i < len(
+                    values) and values[i] is not None else None
+                roc_value = roc[i] if roc and i < len(
+                    roc) and roc[i] is not None else None
+                noise_value = noise[i] if noise and i < len(
+                    noise) and noise[i] is not None else None
+
+                if conversion_func is not None:
+                    value = conversion_func(
+                        value * scale) if value is not None else None
+                    roc_value = conversion_func(
+                        roc_value * scale) if roc_value is not None else None
+                    noise_value = conversion_func(
+                        noise_value * scale) if noise_value is not None else None
+                else:
+                    value *= scale if value is not None else None
+                    roc_value *= scale if roc_value is not None else None
+                    noise_value *= scale if noise_value is not None else None
+
+                v_t.append((value, roc_value, noise_value))
 
             payload = self.to_payload(Actions.SetSimValues, v_t, None)
             self.send_command(payload)

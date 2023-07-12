@@ -133,7 +133,80 @@ def convert_weight_values(
     :raises ValueError: If the conversion from the input unit to the desired unit is not supported.
     """
     converted_values = [
-        value * get_weight_conversion(from_unit, to_unit) if value is not None else None
+        value * get_weight_conversion(from_unit,
+                                      to_unit) if value is not None else None
+        for value in values
+    ]
+    return tuple(converted_values)
+
+
+class TemperatureUnits(Enum):
+    """
+    Enumeration of temperature units.
+    """
+    CELSIUS = "Celsius"
+    FAHRENHEIT = "Fahrenheit"
+    KELVIN = "Kelvin"
+
+
+def get_temperature_conversion(
+    from_unit: TemperatureUnits, to_unit: TemperatureUnits
+) -> Tuple[Union[float, None]]:
+    """
+    Retrieves the conversion factors between two temperature units.
+
+    :param from_unit: The source temperature unit.
+    :type from_unit: TemperatureUnits
+    :param to_unit: The target temperature unit.
+    :type to_unit: TemperatureUnits
+    :return: The conversion factors from the source unit to the target unit.
+    :rtype: Tuple[Union[float, None]]
+    :raises ValueError: If the conversion from the input unit to the desired unit is not supported.
+    """
+    conversion_factors = {
+        (TemperatureUnits.CELSIUS, TemperatureUnits.CELSIUS): (1.0, 0.0),
+        (TemperatureUnits.CELSIUS, TemperatureUnits.FAHRENHEIT): (1.8, 32.0),
+        (TemperatureUnits.CELSIUS, TemperatureUnits.KELVIN): (1.0, 273.15),
+        (TemperatureUnits.FAHRENHEIT, TemperatureUnits.FAHRENHEIT): (1.0, 0.0),
+        (TemperatureUnits.FAHRENHEIT, TemperatureUnits.CELSIUS): (0.5555555556, -17.7777777778),
+        (TemperatureUnits.FAHRENHEIT, TemperatureUnits.KELVIN): (0.5555555556, 255.3722222222),
+        (TemperatureUnits.KELVIN, TemperatureUnits.KELVIN): (1.0, 0.0),
+        (TemperatureUnits.KELVIN, TemperatureUnits.CELSIUS): (1.0, -273.15),
+        (TemperatureUnits.KELVIN, TemperatureUnits.FAHRENHEIT): (1.8, -459.67),
+    }
+
+    conversion_key = (from_unit, to_unit)
+    conversion_factors = conversion_factors.get(conversion_key)
+
+    if conversion_factors is None:
+        raise ValueError(
+            f"Conversion from {from_unit.value} to {to_unit.value} is not supported."
+        )
+
+    return conversion_factors
+
+
+def convert_temperature_values(
+    values: Tuple[Union[float, None]], from_unit: TemperatureUnits, to_unit: TemperatureUnits
+) -> Tuple[Union[float, None]]:
+    """
+    Converts temperature values from one unit to another.
+
+    :param values: The temperature values to be converted.
+    :type values: Tuple[Union[float, None]]
+    :param from_unit: The unit of the input temperature values.
+    :type from_unit: TemperatureUnits
+    :param to_unit: The desired unit for the converted temperature values.
+    :type to_unit: TemperatureUnits
+    :return: The converted temperature values.
+    :rtype: Tuple[Union[float, None]]
+    :raises ValueError: If the conversion from the input unit to the desired unit is not supported.
+    """
+    conversion = get_temperature_conversion(from_unit, to_unit)
+    converted_values = [
+        (value * conversion[0]) + conversion[1]
+        if value is not None
+        else None
         for value in values
     ]
     return tuple(converted_values)

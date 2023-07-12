@@ -26,6 +26,7 @@ Functions:
 """
 # pylint: enable=line-too-long
 import typing
+from enum import Enum
 
 import aqueduct.devices.balance
 import aqueduct.devices.optical_density
@@ -34,6 +35,39 @@ import aqueduct.devices.pressure.transducer
 import aqueduct.devices.pump.peristaltic
 import aqueduct.devices.test_device
 import aqueduct.devices.valve.pinch
+
+
+class DeviceTypes(Enum):
+    PERISTALTIC_PUMP = "peristaltic_pump"
+    SYRINGE_PUMP = "syringe_pump"
+    DIAPHRAGM_PUMP = "diaphragm_pump"
+    PISTON_PUMP = "piston_pump"
+    SOLENOID_VALVE = "solenoid_valve"
+    ROTARY_VALVE = "rotary_valve"
+    PINCH_VALVE = "pinch_valve"
+    TEMPERATURE_PROBE = "temperature_probe"
+    PH_PROBE = "ph_probe"
+    OPTICAL_DENSITY = "optical_density"
+    MIXER = "mixer"
+    CARTESIAN_ROBOT = "cartesian_robot"
+    SCADA_ROBOT = "scada_robot"
+    COLLABORATIVE_ROBOT = "collaborative_robot"
+    LED = "led"
+    DISSOLVED_OXYGEN = "dissolved_oxygen"
+    MASS_FLOW_METER = "mass_flow_meter"
+    MASS_FLOW_CONTROLLER = "mass_flow_controller"
+    PRESSURE_CONTROLLER = "pressure_controller"
+    PRESSURE_TRANSDUCER = "pressure_transducer"
+    BALANCE = "balance"
+    LOAD_CELL = "load_cell"
+    STEPPER_MOTOR = "stepper_motor"
+    SERVO_MOTOR = "servo_motor"
+    BRUSHLESS_MOTOR = "brushless_motor"
+    SOLENOID = "solenoid"
+    BUTTON = "button"
+    SWITCH = "switch"
+    TEST_DEVICE = "test_device"
+    UNKNOWN = "unknown"
 
 
 def create_device(
@@ -51,28 +85,34 @@ def create_device(
     """
     device = None
 
-    if kind == "balance":
-        device = aqueduct.devices.balance.Balance(socket, socket_lock, **kwargs)
-    elif kind == "optical_density":
+    if kind == DeviceTypes.BALANCE.value:
+        device = aqueduct.devices.balance.Balance(
+            socket, socket_lock, **kwargs)
+    elif kind == DeviceTypes.OPTICAL_DENSITY.value:
         device = aqueduct.devices.optical_density.OpticalDensityProbe(
             socket, socket_lock, **kwargs
         )
-    elif kind == "peristaltic_pump":
+    elif kind == DeviceTypes.PERISTALTIC_PUMP.value:
         device = aqueduct.devices.pump.peristaltic.PeristalticPump(
             socket, socket_lock, **kwargs
         )
-    elif kind == "ph_probe":
+    elif kind == DeviceTypes.PH_PROBE.value:
         device = aqueduct.devices.ph.PhProbe(socket, socket_lock, **kwargs)
-    elif kind == "pinch_valve":
-        device = aqueduct.devices.valve.pinch.PinchValve(socket, socket_lock, **kwargs)
-    elif kind == "pressure_transducer":
+    elif kind == DeviceTypes.PINCH_VALVE.value:
+        device = aqueduct.devices.valve.pinch.PinchValve(
+            socket, socket_lock, **kwargs)
+    elif kind == DeviceTypes.PRESSURE_TRANSDUCER.value:
         device = aqueduct.devices.pressure.transducer.PressureTransducer(
             socket, socket_lock, **kwargs
         )
-    elif kind == "syringe_pump":
+    elif kind == DeviceTypes.SYRINGE_PUMP.value:
         device = aqueduct.devices.pump.syringe.SyringePump(
             socket, socket_lock, **kwargs
         )
-    elif kind == "test_device":
-        device = aqueduct.devices.test_device.TestDevice(socket, socket_lock, **kwargs)
+    elif kind == DeviceTypes.TEMPERATURE_PROBE.value:
+        device = aqueduct.devices.temperature.TemperatureProbe(
+            socket, socket_lock, **kwargs)
+    elif kind == DeviceTypes.TEST_DEVICE.value:
+        device = aqueduct.devices.test_device.TestDevice(
+            socket, socket_lock, **kwargs)
     return device

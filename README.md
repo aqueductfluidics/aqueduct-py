@@ -23,7 +23,7 @@ pip install aqueduct-py
 Install with dev dependencies.
 
 ```text
-python -m pip install -e .[test]
+python -m pip install -e '.[test]'
 ```
 
 To test
