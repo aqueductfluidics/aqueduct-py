@@ -133,8 +133,7 @@ def convert_weight_values(
     :raises ValueError: If the conversion from the input unit to the desired unit is not supported.
     """
     converted_values = [
-        value * get_weight_conversion(from_unit,
-                                      to_unit) if value is not None else None
+        value * get_weight_conversion(from_unit, to_unit) if value is not None else None
         for value in values
     ]
     return tuple(converted_values)
@@ -144,6 +143,7 @@ class TemperatureUnits(Enum):
     """
     Enumeration of temperature units.
     """
+
     CELSIUS = "Celsius"
     FAHRENHEIT = "Fahrenheit"
     KELVIN = "Kelvin"
@@ -168,8 +168,14 @@ def get_temperature_conversion(
         (TemperatureUnits.CELSIUS, TemperatureUnits.FAHRENHEIT): (1.8, 32.0),
         (TemperatureUnits.CELSIUS, TemperatureUnits.KELVIN): (1.0, 273.15),
         (TemperatureUnits.FAHRENHEIT, TemperatureUnits.FAHRENHEIT): (1.0, 0.0),
-        (TemperatureUnits.FAHRENHEIT, TemperatureUnits.CELSIUS): (0.5555555556, -17.7777777778),
-        (TemperatureUnits.FAHRENHEIT, TemperatureUnits.KELVIN): (0.5555555556, 255.3722222222),
+        (TemperatureUnits.FAHRENHEIT, TemperatureUnits.CELSIUS): (
+            0.5555555556,
+            -17.7777777778,
+        ),
+        (TemperatureUnits.FAHRENHEIT, TemperatureUnits.KELVIN): (
+            0.5555555556,
+            255.3722222222,
+        ),
         (TemperatureUnits.KELVIN, TemperatureUnits.KELVIN): (1.0, 0.0),
         (TemperatureUnits.KELVIN, TemperatureUnits.CELSIUS): (1.0, -273.15),
         (TemperatureUnits.KELVIN, TemperatureUnits.FAHRENHEIT): (1.8, -459.67),
@@ -187,7 +193,9 @@ def get_temperature_conversion(
 
 
 def convert_temperature_values(
-    values: Tuple[Union[float, None]], from_unit: TemperatureUnits, to_unit: TemperatureUnits
+    values: Tuple[Union[float, None]],
+    from_unit: TemperatureUnits,
+    to_unit: TemperatureUnits,
 ) -> Tuple[Union[float, None]]:
     """
     Converts temperature values from one unit to another.
@@ -204,9 +212,75 @@ def convert_temperature_values(
     """
     conversion = get_temperature_conversion(from_unit, to_unit)
     converted_values = [
-        (value * conversion[0]) + conversion[1]
-        if value is not None
-        else None
+        (value * conversion[0]) + conversion[1] if value is not None else None
         for value in values
     ]
+    return tuple(converted_values)
+
+
+class MassFlowUnits(Enum):
+    """
+    Enumeration of mass flow units.
+    """
+
+    UL_MIN = "UlMin"
+    UL_HR = "UlHr"
+    ML_MIN = "MlMin"
+    ML_HR = "MlHr"
+
+
+def get_mass_flow_conversion(
+    from_unit: MassFlowUnits, to_unit: MassFlowUnits
+) -> Union[float, None]:
+    """
+    Retrieves the conversion factor between two mass flow units.
+
+    :param from_unit: The source mass flow unit.
+    :type from_unit: MassFlowUnits
+    :param to_unit: The target mass flow unit.
+    :type to_unit: MassFlowUnits
+    :return: The conversion factor from the source unit to the target unit.
+    :rtype: Union[float, None]
+    :raises ValueError: If the conversion from the input unit to the desired unit is not supported.
+    """
+    conversion_factors = {
+        (MassFlowUnits.ML_MIN, MassFlowUnits.UL_MIN): 1000.0,
+        (MassFlowUnits.ML_MIN, MassFlowUnits.UL_HR): 60000.0,
+        (MassFlowUnits.ML_MIN, MassFlowUnits.ML_MIN): 1.0,
+        (MassFlowUnits.ML_MIN, MassFlowUnits.ML_HR): 60.0,
+    }
+
+    conversion_key = (from_unit, to_unit)
+    conversion_factor = conversion_factors.get(conversion_key)
+
+    if conversion_factor is None:
+        raise ValueError(
+            f"Conversion from {from_unit.value} to {to_unit.value} is not supported."
+        )
+
+    return conversion_factor
+
+
+def convert_mass_flow_values(
+    values: Tuple[Union[float, None]], from_unit: MassFlowUnits, to_unit: MassFlowUnits
+) -> Tuple[Union[float, None]]:
+    """
+    Converts mass flow values from one unit to another.
+
+    :param values: The mass flow values to be converted.
+    :type values: Tuple[Union[float, None]]
+    :param from_unit: The unit of the input mass flow values.
+    :type from_unit: MassFlowUnits
+    :param to_unit: The desired unit for the converted mass flow values.
+    :type to_unit: MassFlowUnits
+    :return: The converted mass flow values.
+    :rtype: Tuple[Union[float, None]]
+    :raises ValueError: If the conversion from the input unit to the desired unit is not supported.
+    """
+    conversion_factor = get_mass_flow_conversion(from_unit, to_unit)
+
+    converted_values = [
+        value * conversion_factor if value is not None else None for value in values
+    ]
+
     return tuple(converted_values)

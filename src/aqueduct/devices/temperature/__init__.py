@@ -57,8 +57,8 @@ class TemperatureProbeLive:
 class TemperatureProbe(aqueduct.devices.base.obj.Device):
     """Class representing a temperature probe device.
 
-    This class represents a temperature probe device, which can be used to weigh substances. Methods are provided
-    to tare the device, read a temperature value, and read all temperature values.
+    This class represents a temperature probe device. Methods are provided
+    to read a temperature value and read all temperature values.
 
     :ivar has_sim_values: Flag indicating whether the device has simulated values.
     :type has_sim_values: bool
@@ -112,9 +112,9 @@ class TemperatureProbe(aqueduct.devices.base.obj.Device):
     @property
     def celsius(self) -> Tuple[float]:
         """
-        Get all temperature readings from a temperature probe device in celsius.
+        Get all temperature readings from a temperature probe device in Celsius.
 
-        :return: The temperature values for all inputs in celsius.
+        :return: The temperature values for all inputs in Celsius.
         :rtype: Tuple[float]
         """
         return self.get_all_values()
@@ -124,7 +124,7 @@ class TemperatureProbe(aqueduct.devices.base.obj.Device):
         """
         Get all temperature readings from a temperature probe device in Kelvin.
 
-        :return: The temperature values for all inputs in kilocelsius.
+        :return: The temperature values for all inputs in Kelvin.
         :rtype: Tuple[float]
         """
         return convert_temperature_values(
@@ -136,10 +136,12 @@ class TemperatureProbe(aqueduct.devices.base.obj.Device):
         """
         Get all temperature readings from a temperature probe device in Fahrenheit.
 
-        :return: The temperature values for all inputs in pounds.
+        :return: The temperature values for all inputs in Fahrenheit.
         :rtype: Tuple[float]
         """
-        return convert_temperature_values(self.celsius, TemperatureUnits.CELSIUS, TemperatureUnits.FAHRENHEIT)
+        return convert_temperature_values(
+            self.celsius, TemperatureUnits.CELSIUS, TemperatureUnits.FAHRENHEIT
+        )
 
     def set_sim_data(
         self,
@@ -161,11 +163,15 @@ class TemperatureProbe(aqueduct.devices.base.obj.Device):
         :type units: TemperatureUnits
         """
         conversion = get_temperature_conversion(units, TemperatureUnits.CELSIUS)
-        conversion_func = lambda x: (x * conversion[0]) + conversion[1]
+
+        def conversion_func(x):
+            return (x * conversion[0]) + conversion[1]
 
         self._set_sim_data(values, None, None, 1.0, conversion_func)
 
-        conversion_func = lambda x: x * conversion[0]
+        def conversion_func(x):
+            return x * conversion[0]
+
         self._set_sim_data(None, roc, noise, 1.0, conversion_func)
 
     def set_sim_values(

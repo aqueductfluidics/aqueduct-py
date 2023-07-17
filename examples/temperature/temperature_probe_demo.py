@@ -27,7 +27,10 @@ temperature_probe.set_sim_rates_of_change((1.0,), TemperatureUnits.FAHRENHEIT)
 # Continuously perform operations on the temperature probe device
 while True:
     # Get and print the temperature reading from the temperature probe device
-    print(f"Temperature: {temperature_probe.fahrenheit[0]:.3f}°F, {temperature_probe.celsius[0]:.3f}°C")
+    print(
+        f"Temperature: {temperature_probe.fahrenheit[0]:.3f}F, "
+        f"{temperature_probe.celsius[0]:.3f}C"
+    )
 
     # Pause for 5 seconds
     time.sleep(5)

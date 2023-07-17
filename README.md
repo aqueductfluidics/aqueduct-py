@@ -31,3 +31,9 @@ To test
 ```text
 python -m pytest src
 ```
+
+## Pre-Commit Hooks
+
+```text
+pre-commit run --all-files
+```
