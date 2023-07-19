@@ -4,11 +4,7 @@
 
 The Aqueduct Fluidics Python API is a Python-based software package designed for laboratory automation and instrumentation. It provides an abstraction layer that allows operators to write Python code to interface with devices such as pumps, valves, and sensors, without having to deal with low-level communication protocols.
 
-## Features
-
--   Abstraction layer for device communication
--   User-friendly interface for device control and data acquisition
--   Supports integration with various laboratory instruments and software platforms
+You can find complete documentation here [here](https://docs.aqueductfluidics.com).
 
 ## Getting Started
 
