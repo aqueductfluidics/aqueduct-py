@@ -4,6 +4,7 @@ from typing import List
 from typing import Tuple
 from typing import Union
 
+from aqueduct.core.pid import AccessorData, AccessorKind
 from aqueduct.core.socket_constants import Actions
 from aqueduct.devices.base.obj import Command
 from aqueduct.devices.base.obj import Device
@@ -228,7 +229,8 @@ class PeristalticPump(Device):
         :rtype: None
         """
         commands = self.map_commands(commands)
-        payload = self.to_payload(Actions.Start, {"commands": commands}, record)
+        payload = self.to_payload(
+            Actions.Start, {"commands": commands}, record)
         self.send_command(payload)
 
     def change_speed(
@@ -254,7 +256,8 @@ class PeristalticPump(Device):
         :rtype: None
         """
         commands = self.map_commands(commands)
-        payload = self.to_payload(Actions.ChangeSpeed, {"commands": commands}, record)
+        payload = self.to_payload(Actions.ChangeSpeed, {
+                                  "commands": commands}, record)
         self.send_command(payload)
 
     def stop(
@@ -359,3 +362,20 @@ class PeristalticPump(Device):
         :rtype: tuple
         """
         return self.extract_live_as_tuple(PeristalticPumpLiveKeys.ml_done.value)
+
+    def to_pid_accessor(
+        self,
+        index: int,
+        units: RateUnits = RateUnits.MlMin,
+    ) -> AccessorData:
+        """
+        Convert parameters to an AccessorData instance for use in PID controller.
+
+        :param index: The index of the accessor.
+        :type index: int
+        :param units: The rate units units to be used (default is RateUnits.MlMin).
+        :type units: RateUnits, optional
+        :return: The AccessorData instance.
+        :rtype: AccessorData
+        """
+        return AccessorData(kind=AccessorKind.PeristalicticRate.value, units=units.value, device_id=self._device_id, index=index)

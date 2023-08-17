@@ -25,6 +25,7 @@ class Events(enum.Enum):
     """Enumeration for events."""
 
     ADD_DEVICE = "add_device"
+    CREATE_PID_CONTROLLERS = "create_pid_controllers"
     CLEAR_DEVICE_RECORDABLE = "clear_device_recordable"
     CLEAR_SETUP = "clear_setup"
     CLEAR_USER_RECORDABLES = "clear_user_recordables"
@@ -38,8 +39,10 @@ class Events(enum.Enum):
     PAUSE_RECIPE = "pause_recipe"
     RECIPE_STATUS = "recipe_status"
     REGISTER_PROCESS = "register_process"
+    REGISTERED_USER = "registered_user"
     SET_RECIPE_INPUT = "set_recipe_input"
     SET_RECIPE_PROMPT = "set_recipe_prompt"
+    UPDATE_PID_CONTROLLERS = "update_pid_controllers"
     UPDATE_PROCESS = "update_process"
     UPDATE_USER_PARAMS = "update_user_params"
     UPDATE_USER_RECORDABLES = "update_user_recordables"

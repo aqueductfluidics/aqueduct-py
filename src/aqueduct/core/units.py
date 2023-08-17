@@ -8,11 +8,11 @@ class PressureUnits(Enum):
     Enumeration of pressure units.
     """
 
-    TORR = "Torr"
-    PSI = "Psi"
-    ATMOSPHERE_STD = "AtmosphereStd"
-    PASCAL = "Pascal"
-    BAR = "Bar"
+    TORR = 0
+    PSI = 1
+    ATMOSPHERE_STD = 2
+    PASCAL = 3
+    BAR = 4
 
 
 def get_pressure_conversion(
@@ -74,12 +74,15 @@ def convert_pressure_values(
 
 
 class WeightUnits(Enum):
-    GRAMS = "Grams"
-    OUNCES = "Ounces"
-    POUNDS = "Pounds"
-    CARATS = "Carats"
-    KILOGRAMS = "Kilograms"
-    NEWTONS = "Newtons"
+    """
+    Enumeration of weight units.
+    """
+    GRAMS = 0
+    OUNCES = 1
+    POUNDS = 2
+    CARATS = 3
+    KILOGRAMS = 4
+    NEWTONS = 5
 
 
 def get_weight_conversion(
@@ -133,7 +136,8 @@ def convert_weight_values(
     :raises ValueError: If the conversion from the input unit to the desired unit is not supported.
     """
     converted_values = [
-        value * get_weight_conversion(from_unit, to_unit) if value is not None else None
+        value * get_weight_conversion(from_unit,
+                                      to_unit) if value is not None else None
         for value in values
     ]
     return tuple(converted_values)
@@ -144,9 +148,9 @@ class TemperatureUnits(Enum):
     Enumeration of temperature units.
     """
 
-    CELSIUS = "Celsius"
-    FAHRENHEIT = "Fahrenheit"
-    KELVIN = "Kelvin"
+    CELSIUS = 0
+    FAHRENHEIT = 1
+    KELVIN = 2
 
 
 def get_temperature_conversion(
@@ -223,10 +227,10 @@ class MassFlowUnits(Enum):
     Enumeration of mass flow units.
     """
 
-    UL_MIN = "UlMin"
-    UL_HR = "UlHr"
-    ML_MIN = "MlMin"
-    ML_HR = "MlHr"
+    UL_MIN = 0
+    UL_HR = 1
+    ML_MIN = 2
+    ML_HR = 3
 
 
 def get_mass_flow_conversion(

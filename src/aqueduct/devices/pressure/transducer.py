@@ -32,6 +32,7 @@ from typing import Union
 
 import aqueduct.devices.base.obj
 from aqueduct.core.socket_constants import Actions
+from aqueduct.core.pid import AccessorData, AccessorKind
 from aqueduct.core.units import convert_pressure_values
 from aqueduct.core.units import get_pressure_conversion
 from aqueduct.core.units import PressureUnits
@@ -276,3 +277,20 @@ class PressureTransducer(aqueduct.devices.base.obj.Device):
         :type units: PressureUnits
         """
         self.set_sim_data(values=None, roc=None, noise=noise, units=units)
+
+    def to_pid_accessor(
+        self,
+        index: int,
+        units: PressureUnits = PressureUnits.TORR,
+    ) -> AccessorData:
+        """
+        Convert parameters to an AccessorData instance for use in PID controller.
+
+        :param index: The index of the accessor.
+        :type index: int
+        :param units: The pressure units to be used (default is PressureUnits.TORR).
+        :type units: PressureUnits, optional
+        :return: The AccessorData instance.
+        :rtype: AccessorData
+        """
+        return AccessorData(kind=AccessorKind.Pressure.value, units=units.value, device_id=self._device_id, index=index)

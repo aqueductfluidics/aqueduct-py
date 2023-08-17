@@ -6,6 +6,7 @@ from typing import Union
 
 import aqueduct.devices.base.obj
 from aqueduct.core.socket_constants import Actions
+from aqueduct.core.pid import AccessorData, AccessorKind
 
 
 class SetPositionCommand:
@@ -152,3 +153,17 @@ class PinchValve(aqueduct.devices.base.obj.Device):
         :return: Tuple of percentage open values
         """
         return self.extract_live_as_tuple(PinchValveLiveKeys.pct_open.value)
+    
+    def to_pid_accessor(
+        self,
+        index: int,
+    ) -> AccessorData:
+        """
+        Convert parameters to an AccessorData instance for use in PID controller.
+
+        :param index: The index of the accessor.
+        :type index: int
+        :return: The AccessorData instance.
+        :rtype: AccessorData
+        """
+        return AccessorData(kind=AccessorKind.Position.value, units=0, device_id=self._device_id, index=index)

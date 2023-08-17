@@ -18,6 +18,14 @@ pip install aqueduct-py
 
 Install with dev dependencies.
 
+Windows
+
+```text
+python -m pip install -e .[test]
+```
+
+Mac
+
 ```text
 python -m pip install -e '.[test]'
 ```
