@@ -39,6 +39,7 @@ import sys
 import threading
 import time
 import typing
+import warnings
 
 import psutil
 from aqueduct.core.input import Input
@@ -418,9 +419,11 @@ class Aqueduct:
         _loaded, payload = self.send_and_wait_for_rx(
             message, Events.REGISTERED_USER.value, SOCKET_TX_ATTEMPTS)
 
-        payload = json.loads(payload)
-
-        self._application_version = payload.get("application_version")
+        try:
+            payload = json.loads(payload)
+            self._application_version = payload.get("application_version")
+        except TypeError:
+            warnings.warn("Application version not found in response.")
 
         message = json.dumps(
             [
