@@ -1029,6 +1029,9 @@ class Aqueduct:
         Raises:
             ValueError: if the PidController is not found.
         """
+        if not isinstance(controller._aq, Aqueduct): # pylint: disable=protected-access
+            controller.assign(self)
+
         message = json.dumps(
             [
                 SocketCommands.SocketMessage.value,
@@ -1039,13 +1042,19 @@ class Aqueduct:
             ]
         ).encode()
 
-        ok, message = self.send_and_wait_for_rx(
+        _ok, response = self.send_and_wait_for_rx(
             message,
-            Events.CREATE_PID_CONTROLLERS.value,
+            Events.CREATED_PID_CONTROLLERS.value,
             SOCKET_TX_ATTEMPTS,
         )
 
-        print(message)
+        try:
+            while isinstance(response, str):
+                response = json.loads(response)
+            controller_id = int(list(response.get("controllers").keys())[0])
+            controller.set_id(controller_id)
+        except json.decoder.JSONDecodeError as error:
+            warnings.warn(f"Failed to create PID controller: {error}")
 
 
 class AqHelper:

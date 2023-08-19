@@ -1,6 +1,11 @@
 from typing import Optional, Tuple
 import json
 from enum import Enum
+import warnings
+
+from aqueduct.core.socket_constants import Events
+from aqueduct.core.socket_constants import SOCKET_TX_ATTEMPTS
+from aqueduct.core.socket_constants import SocketCommands
 
 # pylint: disable=invalid-name
 
@@ -68,9 +73,11 @@ class Pid:
         p_limit (Optional[float]): Limiter for the proportional term.
         i_limit (Optional[float]): Limiter for the integral term.
         d_limit (Optional[float]): Limiter for the derivative term.
-        delta_output_limit (Optional[float]): Maximum allowable change in output.
+        delta_limits (Optional[float]): Maximum allowable change in output, (max_decrement, max_increment).
         control_bounds (Tuple[Optional[float], Optional[float]]): Bounds for integral accumulation.
         output_limits (Tuple[Optional[float], Optional[float]]): Overall output filter limits.
+        dead_zone (Optional[float]): Defines the region around the setpoint 
+          where the controller does not manipulate the output, (lower bound, upper bound).
     """
 
     enabled: bool
@@ -82,9 +89,10 @@ class Pid:
     p_limit: Optional[float]
     i_limit: Optional[float]
     d_limit: Optional[float]
-    delta_output_limit: Optional[float]
+    delta_limits: Optional[Tuple[float, float]]
     control_bounds: Tuple[Optional[float], Optional[float]]
     output_limits: Tuple[Optional[float], Optional[float]]
+    dead_zone: Optional[Tuple[float, float]]
 
     def __init__(
         self,
@@ -102,9 +110,10 @@ class Pid:
         self.p_limit = None
         self.i_limit = None
         self.d_limit = None
-        self.delta_output_limit = None
+        self.delta_limits = None
         self.control_bounds = control_bounds
         self.output_limits = output_limits
+        self.dead_zone = None
 
     def serialize(self) -> dict:
         """
@@ -140,6 +149,7 @@ class PidController:
         self.input = input_data
         self.output = output_data
         self.pid = pid_params
+        self._id = None
         self._aq = None
 
     def assign(self, aqueduct: "Aqueduct"):
@@ -150,6 +160,15 @@ class PidController:
             aqueduct (Aqueduct): An instance of Aqueduct.
         """
         self._aq = aqueduct
+
+    def set_id(self, controller_id: int):
+        """
+        Set an Aqueduct instance for this PID controller.
+
+        Args:
+            aqueduct (Aqueduct): An instance of Aqueduct.
+        """
+        self._id = controller_id
 
     def serialize(self) -> dict:
         """
@@ -165,6 +184,18 @@ class PidController:
             "pid": self.pid.serialize(),
         }
 
+    def serialize_update(self) -> dict:
+        """
+        Serialize the PID controller object.
+
+        Returns:
+            dict: a dictionary representation of the PID controller object
+        """
+        return {
+            "id": self._id,
+            "pid": self.pid.serialize(),
+        }
+
     def to_json(self):
         """
         Convert this Setpoint object to a JSON string representation.
@@ -174,23 +205,26 @@ class PidController:
         """
         return json.dumps(self, default=lambda o: o.serialize())
 
-    def initialize(self):
-        """
-        Initialize the PID controller.
-        """
-        pass
+    def _update(self):
+        message = json.dumps(
+            [
+                SocketCommands.SocketMessage.value,
+                [
+                    Events.UPDATE_PID_CONTROLLERS.value,
+                    dict(controllers=[self.serialize_update()]),
+                ],
+            ]
+        ).encode()
 
-    def update(self):
-        """
-        Update the PID controller.
-        """
-        pass
+        _ok, response = self._aq.send_and_wait_for_rx(
+            message,
+            Events.UPDATED_PID_CONTROLLERS.value,
+            SOCKET_TX_ATTEMPTS,
+        )
 
-    def control(self, setpoint: float):
-        """
-        Control the process using the PID controller.
-
-        Args:
-            setpoint (float): The desired setpoint value.
-        """
-        pass
+        try:
+            while isinstance(response, str):
+                response = json.loads(response)
+            print(response)
+        except json.decoder.JSONDecodeError as error:
+            warnings.warn(f"Failed to update PID controller: {error}")
