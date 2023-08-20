@@ -56,7 +56,13 @@ class AccessorData:
         Returns:
             dict: a dictionary representation of the PID object
         """
-        return self.__dict__
+        serialized = self.__dict__.copy()
+
+        for key, value in serialized.items():
+            if isinstance(value, tuple):
+                serialized[key] = list(value)
+
+        return serialized
 
 
 class Pid:
@@ -83,12 +89,14 @@ class Pid:
     enabled: bool
     update_interval_ms: int
     setpoint: float
+    bias: float
     kp: float
     ki: float
     kd: float
     p_limit: Optional[float]
     i_limit: Optional[float]
     d_limit: Optional[float]
+    integral_term: float
     delta_limits: Optional[Tuple[float, float]]
     control_bounds: Tuple[Optional[float], Optional[float]]
     output_limits: Tuple[Optional[float], Optional[float]]
@@ -97,22 +105,53 @@ class Pid:
     def __init__(
         self,
         setpoint: float,
-        update_interval_ms: int,
-        control_bounds: Tuple[Optional[float], Optional[float]],
-        output_limits: Tuple[Optional[float], Optional[float]]
+        update_interval_ms: int = 1000,
+        **kwargs,
     ):
-        self.enabled = False
-        self.update_interval_ms = update_interval_ms
+        self._init_defaults()
+        valid_attributes = {
+            "enabled": bool,
+            "update_interval_ms": int,
+            "setpoint": float,
+            "bias": float,
+            "kp": float,
+            "ki": float,
+            "kd": float,
+            "p_limit": (float, type(None)),
+            "i_limit": (float, type(None)),
+            "d_limit": (float, type(None)),
+            "integral_term": float,
+            "delta_limits": (tuple, type(None)),
+            "control_bounds": (tuple,),
+            "output_limits": (tuple,),
+            "dead_zone": (tuple, type(None))
+        }
+
         self.setpoint = setpoint
+        self.update_interval_ms = update_interval_ms
+
+        for key, value in kwargs.items():
+            if key in valid_attributes and isinstance(value, valid_attributes[key]):
+                setattr(self, key, value)
+            else:
+                pass
+
+    def _init_defaults(self):
+        """Default initiailzer."""
+        self.enabled = False
+        self.update_interval_ms = 1000
+        self.setpoint = 0.0
+        self.bias = 0.0
         self.kp = 0.0
         self.ki = 0.0
         self.kd = 0.0
         self.p_limit = None
         self.i_limit = None
         self.d_limit = None
+        self.integral_term = 0.0
         self.delta_limits = None
-        self.control_bounds = control_bounds
-        self.output_limits = output_limits
+        self.control_bounds = (None, None)
+        self.output_limits = (None, None)
         self.dead_zone = None
 
     def serialize(self) -> dict:
@@ -205,6 +244,55 @@ class PidController:
         """
         return json.dumps(self, default=lambda o: o.serialize())
 
+    def change_setpoint(self, setpoint: float, clear_integral: bool = False):
+        """
+        Change the setpoint of the PID controller.
+        """
+        self.pid.setpoint = setpoint
+        if clear_integral:
+            self.pid.integral_term = 0.0
+        self._update()
+
+    def enable(self):
+        """
+        Enable the PID controller.
+        """
+        self.pid.enabled = True
+        self._update()
+
+    def disable(self):
+        """
+        Disable the PID controller.
+        """
+        self.pid.enabled = False
+        self._update()
+
+    def change_parameters(self, kp=None, ki=None, kd=None, bias=None):
+        """
+        Change the PID parameters.
+
+        Args:
+            kp (float): New proportional gain.
+            ki (float): New integral gain.
+            kd (float): New derivative gain.
+        """
+        if kp is not None:
+            self.pid.kp = kp
+        if ki is not None:
+            self.pid.ki = ki
+        if kd is not None:
+            self.pid.kd = kd
+        if bias is not None:
+            self.pid.bias = bias
+        self._update()
+
+    def clear_integral(self):
+        """
+        Clear the integral term of the PID controller.
+        """
+        self.pid.integral_term = 0.0
+        self._update()
+
     def _update(self):
         message = json.dumps(
             [
@@ -225,6 +313,14 @@ class PidController:
         try:
             while isinstance(response, str):
                 response = json.loads(response)
-            print(response)
+
+            controllers = response.get("controllers", {})
+            updated_controller = controllers.get(str(self._id))
+
+            if updated_controller:
+                updated_pid = updated_controller.get("pid")
+                if updated_pid:
+                    self.pid = Pid(**updated_pid)
+
         except json.decoder.JSONDecodeError as error:
             warnings.warn(f"Failed to update PID controller: {error}")
