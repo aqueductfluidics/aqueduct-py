@@ -1,4 +1,4 @@
-from typing import Optional, Tuple
+from typing import Optional, Tuple, List
 import json
 from enum import Enum
 import warnings
@@ -65,6 +65,147 @@ class AccessorData:
         return serialized
 
 
+class Controller:
+    """
+    Class representing the parameterized PID controller.
+
+
+    """
+    bias: float
+    kp: float
+    ki: float
+    kd: float
+    linearity: float
+    beta: float
+    setpoint_range: float
+    p_limit: Optional[float]
+    i_limit: Optional[float]
+    d_limit: Optional[float]
+    delta_limit: Optional[float]
+    integral_valid: Optional[float]
+    dead_zone: Optional[float]
+
+    def __init__(
+        self,
+        **kwargs,
+    ):
+        self._init_defaults()
+        valid_attributes = {
+            "bias": float,
+            "kp": float,
+            "ki": float,
+            "kd": float,
+            "linearity": float,
+            "beta": float,
+            "setpoint_range": float,
+            "p_limit": (float, type(None)),
+            "i_limit": (float, type(None)),
+            "d_limit": (float, type(None)),
+            "delta_limit": (float, type(None)),
+            "integral_valid": (float, type(None)),
+            "dead_zone": (float, type(None))
+        }
+
+        for key, value in kwargs.items():
+            if key in valid_attributes and isinstance(value, valid_attributes[key]):
+                setattr(self, key, value)
+
+    def _init_defaults(self):
+        """Default initializer."""
+        self.bias = 0.0
+        self.kp = 0.0
+        self.ki = 0.0
+        self.kd = 0.0
+        self.linearity = 1.0
+        self.beta = 1.0
+        self.setpoint_range = 1.0
+        self.p_limit = None
+        self.i_limit = None
+        self.d_limit = None
+        self.delta_limit = None
+        self.integral_valid = None
+        self.dead_zone = None
+
+    def serialize(self):
+        return {
+            "bias": self.bias,
+            "kp": self.kp,
+            "ki": self.ki,
+            "kd": self.kd,
+            "linearity": self.linearity,
+            "beta": self.beta,
+            "setpoint_range": self.setpoint_range,
+            "p_limit": [self.p_limit, None] if self.p_limit else [None, True],
+            "i_limit": [self.i_limit, None] if self.i_limit else [None, True],
+            "d_limit": [self.d_limit, None] if self.d_limit else [None, True],
+            "delta_limit": [self.delta_limit, None] if self.delta_limit else [None, True],
+            "integral_valid": [self.integral_valid, None] if self.integral_valid else [None, True],
+            "dead_zone": [self.dead_zone, None] if self.dead_zone else [None, True],
+        }
+
+class ControllerSchedule:
+    process: Optional[Tuple[float, float]]
+    error: Optional[Tuple[float, float]]
+    control: Optional[Tuple[float, float]]
+
+    def __init__(
+        self,
+        **kwargs,
+    ):
+        self._init_defaults()
+        valid_attributes = {
+            "process": (tuple, type(None)),
+            "error": (tuple, type(None)),
+            "control": (tuple, type(None)),
+        }
+
+        for key, value in kwargs.items():
+            if key in valid_attributes and isinstance(value, valid_attributes[key]):
+                setattr(self, key, value)
+
+    def _init_defaults(self):
+        """Default initializer."""
+        self.process = None
+        self.error = None
+        self.control = None
+
+    def serialize(self) -> dict:
+        """
+        Serialize the PID object.
+
+        Returns:
+            dict: a dictionary representation of the PID object
+        """
+        return self.__dict__
+
+
+class Schedule:
+    controller: Controller
+    schedule: ControllerSchedule
+
+    def __init__(
+        self,
+        controller: Controller,
+        schedule: Optional[ControllerSchedule] = None
+    ):
+        self.controller = controller
+        if schedule is None:
+            schedule = ControllerSchedule()
+        self.schedule = schedule
+
+    def serialize(self) -> dict:
+        """
+        Serialize the PID object.
+
+        Returns:
+            dict: a dictionary representation of the PID object
+        """
+        return {
+            **self.schedule.serialize(),
+            **self.controller.serialize(),
+        }
+
+
 class Pid:
     """
     Class representing a PID controller.
@@ -73,34 +214,15 @@ class Pid:
         enabled (bool): Enable / Disable the PID controller. Will output None when disabled.
         update_interval (timedelta): Time interval between updates.
         setpoint (float): Ideal setpoint to strive for.
-        kp (float): Proportional gain.
-        ki (float): Integral gain.
-        kd (float): Derivative gain.
-        p_limit (Optional[float]): Limiter for the proportional term.
-        i_limit (Optional[float]): Limiter for the integral term.
-        d_limit (Optional[float]): Limiter for the derivative term.
-        delta_limits (Optional[float]): Maximum allowable change in output, (max_decrement, max_increment).
-        control_bounds (Tuple[Optional[float], Optional[float]]): Bounds for integral accumulation.
         output_limits (Tuple[Optional[float], Optional[float]]): Overall output filter limits.
-        dead_zone (Optional[float]): Defines the region around the setpoint 
-          where the controller does not manipulate the output, (lower bound, upper bound).
     """
 
     enabled: bool
     update_interval_ms: int
     setpoint: float
-    bias: float
-    kp: float
-    ki: float
-    kd: float
-    p_limit: Optional[float]
-    i_limit: Optional[float]
-    d_limit: Optional[float]
+    schedule: List[Schedule]
     integral_term: float
-    delta_limits: Optional[Tuple[float, float]]
-    control_bounds: Tuple[Optional[float], Optional[float]]
     output_limits: Tuple[Optional[float], Optional[float]]
-    dead_zone: Optional[Tuple[float, float]]
 
     def __init__(
         self,
@@ -113,18 +235,8 @@ class Pid:
             "enabled": bool,
             "update_interval_ms": int,
             "setpoint": float,
-            "bias": float,
-            "kp": float,
-            "ki": float,
-            "kd": float,
-            "p_limit": (float, type(None)),
-            "i_limit": (float, type(None)),
-            "d_limit": (float, type(None)),
             "integral_term": float,
-            "delta_limits": (tuple, type(None)),
-            "control_bounds": (tuple,),
             "output_limits": (tuple,),
-            "dead_zone": (tuple, type(None))
         }
 
         self.setpoint = setpoint
@@ -141,18 +253,12 @@ class Pid:
         self.enabled = False
         self.update_interval_ms = 1000
         self.setpoint = 0.0
-        self.bias = 0.0
-        self.kp = 0.0
-        self.ki = 0.0
-        self.kd = 0.0
-        self.p_limit = None
-        self.i_limit = None
-        self.d_limit = None
         self.integral_term = 0.0
-        self.delta_limits = None
-        self.control_bounds = (None, None)
+        self.schedule = []
         self.output_limits = (None, None)
-        self.dead_zone = None
+
+    def add_schedule(self, schedule: Schedule):
+        self.schedule.append(schedule)
 
     def serialize(self) -> dict:
         """
@@ -161,8 +267,14 @@ class Pid:
         Returns:
             dict: a dictionary representation of the PID object
         """
-        return self.__dict__
-
+        return {
+            "enabled": self.enabled,
+            "update_interval_ms": self.update_interval_ms,
+            "setpoint": self.setpoint,
+            "integral_term": self.integral_term,
+            "schedule": [s.serialize() for s in self.schedule],
+            "output_limits": list(self.output_limits),
+        }
 
 class PidController:
 

@@ -1032,6 +1032,8 @@ class Aqueduct:
         if not isinstance(controller._aq, Aqueduct): # pylint: disable=protected-access
             controller.assign(self)
 
+        print(controller.serialize())
+
         message = json.dumps(
             [
                 SocketCommands.SocketMessage.value,
