@@ -30,6 +30,8 @@ class Events(enum.Enum):
     CLEAR_DEVICE_RECORDABLE = "clear_device_recordable"
     CLEAR_SETUP = "clear_setup"
     CLEAR_USER_RECORDABLES = "clear_user_recordables"
+    DELETE_PID_CONTROLLERS = "delete_pid_controllers"
+    DELETED_PID_CONTROLLERS = "delete_pid_controllers"
     DEVICE_ACTION = "device_action"
     GET_DEVICE = "get_device"
     GET_DEVICE_LIVE = "get_device_live"

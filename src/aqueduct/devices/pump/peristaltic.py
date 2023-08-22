@@ -4,7 +4,8 @@ from typing import List
 from typing import Tuple
 from typing import Union
 
-from aqueduct.core.pid import AccessorData, AccessorKind
+from aqueduct.core.pid import AccessorData
+from aqueduct.core.pid import AccessorKind
 from aqueduct.core.socket_constants import Actions
 from aqueduct.devices.base.obj import Command
 from aqueduct.devices.base.obj import Device
@@ -229,8 +230,7 @@ class PeristalticPump(Device):
         :rtype: None
         """
         commands = self.map_commands(commands)
-        payload = self.to_payload(
-            Actions.Start, {"commands": commands}, record)
+        payload = self.to_payload(Actions.Start, {"commands": commands}, record)
         self.send_command(payload)
 
     def change_speed(
@@ -256,8 +256,7 @@ class PeristalticPump(Device):
         :rtype: None
         """
         commands = self.map_commands(commands)
-        payload = self.to_payload(Actions.ChangeSpeed, {
-                                  "commands": commands}, record)
+        payload = self.to_payload(Actions.ChangeSpeed, {"commands": commands}, record)
         self.send_command(payload)
 
     def stop(
@@ -363,7 +362,7 @@ class PeristalticPump(Device):
         """
         return self.extract_live_as_tuple(PeristalticPumpLiveKeys.ml_done.value)
 
-    def to_pid_accessor(
+    def to_pid_control_value(
         self,
         index: int,
         units: RateUnits = RateUnits.MlMin,
@@ -378,4 +377,9 @@ class PeristalticPump(Device):
         :return: The AccessorData instance.
         :rtype: AccessorData
         """
-        return AccessorData(kind=AccessorKind.PeristalicticRate.value, units=units.value, device_id=self._device_id, index=index)
+        return AccessorData(
+            kind=AccessorKind.PeristalicticRate.value,
+            units=units.value,
+            device_id=self._device_id,
+            index=index,
+        )

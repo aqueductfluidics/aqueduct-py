@@ -86,11 +86,9 @@ def create_device(
     device = None
 
     if kind == DeviceTypes.BALANCE.value:
-        device = aqueduct.devices.balance.Balance(
-            socket, socket_lock, **kwargs)
+        device = aqueduct.devices.balance.Balance(socket, socket_lock, **kwargs)
     elif kind == DeviceTypes.MASS_FLOW_METER.value:
-        device = aqueduct.devices.mass_flow.MassFlowMeter(
-            socket, socket_lock, **kwargs)
+        device = aqueduct.devices.mass_flow.MassFlowMeter(socket, socket_lock, **kwargs)
     elif kind == DeviceTypes.OPTICAL_DENSITY.value:
         device = aqueduct.devices.optical_density.OpticalDensityProbe(
             socket, socket_lock, **kwargs
@@ -102,8 +100,7 @@ def create_device(
     elif kind == DeviceTypes.PH_PROBE.value:
         device = aqueduct.devices.ph.PhProbe(socket, socket_lock, **kwargs)
     elif kind == DeviceTypes.PINCH_VALVE.value:
-        device = aqueduct.devices.valve.pinch.PinchValve(
-            socket, socket_lock, **kwargs)
+        device = aqueduct.devices.valve.pinch.PinchValve(socket, socket_lock, **kwargs)
     elif kind == DeviceTypes.PRESSURE_TRANSDUCER.value:
         device = aqueduct.devices.pressure.transducer.PressureTransducer(
             socket, socket_lock, **kwargs
@@ -121,6 +118,5 @@ def create_device(
             socket, socket_lock, **kwargs
         )
     elif kind == DeviceTypes.TEST_DEVICE.value:
-        device = aqueduct.devices.test_device.TestDevice(
-            socket, socket_lock, **kwargs)
+        device = aqueduct.devices.test_device.TestDevice(socket, socket_lock, **kwargs)
     return device

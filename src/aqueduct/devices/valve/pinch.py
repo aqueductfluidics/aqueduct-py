@@ -5,8 +5,9 @@ from typing import Tuple
 from typing import Union
 
 import aqueduct.devices.base.obj
+from aqueduct.core.pid import AccessorData
+from aqueduct.core.pid import AccessorKind
 from aqueduct.core.socket_constants import Actions
-from aqueduct.core.pid import AccessorData, AccessorKind
 
 
 class SetPositionCommand:
@@ -153,8 +154,8 @@ class PinchValve(aqueduct.devices.base.obj.Device):
         :return: Tuple of percentage open values
         """
         return self.extract_live_as_tuple(PinchValveLiveKeys.pct_open.value)
-    
-    def to_pid_accessor(
+
+    def to_pid_control_value(
         self,
         index: int,
     ) -> AccessorData:
@@ -166,4 +167,9 @@ class PinchValve(aqueduct.devices.base.obj.Device):
         :return: The AccessorData instance.
         :rtype: AccessorData
         """
-        return AccessorData(kind=AccessorKind.Position.value, units=0, device_id=self._device_id, index=index)
+        return AccessorData(
+            kind=AccessorKind.Position.value,
+            units=0,
+            device_id=self._device_id,
+            index=index,
+        )

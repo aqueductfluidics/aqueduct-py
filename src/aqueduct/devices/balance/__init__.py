@@ -28,8 +28,9 @@ from typing import Tuple
 from typing import Union
 
 import aqueduct.devices.base.obj
+from aqueduct.core.pid import AccessorData
+from aqueduct.core.pid import AccessorKind
 from aqueduct.core.socket_constants import Actions
-from aqueduct.core.pid import AccessorData, AccessorKind
 from aqueduct.core.units import convert_weight_values
 from aqueduct.core.units import get_weight_conversion
 from aqueduct.core.units import WeightUnits
@@ -280,7 +281,7 @@ class Balance(aqueduct.devices.base.obj.Device):
         """
         self.set_sim_data(values=None, roc=None, noise=noise, units=units)
 
-    def to_pid_accessor(
+    def to_pid_process_value(
         self,
         index: int,
         units: WeightUnits = WeightUnits.GRAMS,
@@ -295,4 +296,9 @@ class Balance(aqueduct.devices.base.obj.Device):
         :return: The AccessorData instance.
         :rtype: AccessorData
         """
-        return AccessorData(kind=AccessorKind.Weight.value, units=units.value, device_id=self._device_id, index=index)
+        return AccessorData(
+            kind=AccessorKind.Weight.value,
+            units=units.value,
+            device_id=self._device_id,
+            index=index,
+        )

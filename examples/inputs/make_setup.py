@@ -1,9 +1,8 @@
 from aqueduct.core.aq import Aqueduct
 from aqueduct.core.aq import InitParams
 from aqueduct.devices.balance import Balance
-from aqueduct.devices.pump.peristaltic import PeristalticPump
-
 from aqueduct.devices.base.utils import DeviceTypes
+from aqueduct.devices.pump.peristaltic import PeristalticPump
 
 params = InitParams.parse()
 aq = Aqueduct(params.user_id, params.ip_address, params.port)

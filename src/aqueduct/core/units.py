@@ -77,6 +77,7 @@ class WeightUnits(Enum):
     """
     Enumeration of weight units.
     """
+
     GRAMS = 0
     OUNCES = 1
     POUNDS = 2
@@ -136,8 +137,7 @@ def convert_weight_values(
     :raises ValueError: If the conversion from the input unit to the desired unit is not supported.
     """
     converted_values = [
-        value * get_weight_conversion(from_unit,
-                                      to_unit) if value is not None else None
+        value * get_weight_conversion(from_unit, to_unit) if value is not None else None
         for value in values
     ]
     return tuple(converted_values)

@@ -54,7 +54,7 @@ def get_delta(step: int, phase: float) -> float:
     :return: The calculated delta value.
     :rtype: float
     """
-    return math.sin(step / STEPS * (2*math.pi) + phase)
+    return math.sin(step / STEPS * (2 * math.pi) + phase)
 
 
 def change_speed(pump: PeristalticPump, rate_value: float):
@@ -84,8 +84,8 @@ while True:
 
     for i in range(0, STEPS):
         pump1_delta = get_delta(i, 0)
-        pump2_delta = get_delta(i, 2*math.pi / 3)
-        pump3_delta = get_delta(i, 4*math.pi / 3)
+        pump2_delta = get_delta(i, 2 * math.pi / 3)
+        pump3_delta = get_delta(i, 4 * math.pi / 3)
 
         change_speed(pump1, MEAN + pump1_delta)
         change_speed(pump2, MEAN + pump2_delta)

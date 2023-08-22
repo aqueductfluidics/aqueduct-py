@@ -60,7 +60,8 @@ from aqueduct.core.utils import send_and_wait_for_rx
 from aqueduct.core.utils import split_packets
 from aqueduct.core.utils import string_to_bool
 from aqueduct.devices.base.obj import Device
-from aqueduct.devices.base.utils import create_device, DeviceTypes
+from aqueduct.devices.base.utils import create_device
+from aqueduct.devices.base.utils import DeviceTypes
 
 
 class InitParams:
@@ -417,7 +418,8 @@ class Aqueduct:
         ).encode()
 
         _loaded, payload = self.send_and_wait_for_rx(
-            message, Events.REGISTERED_USER.value, SOCKET_TX_ATTEMPTS)
+            message, Events.REGISTERED_USER.value, SOCKET_TX_ATTEMPTS
+        )
 
         try:
             payload = json.loads(payload)
@@ -529,8 +531,7 @@ class Aqueduct:
                         self._socket_lock,
                         **dev_obj,
                     )
-                    self.devices.update(
-                        {dev_obj.get("base").get("name"): device})
+                    self.devices.update({dev_obj.get("base").get("name"): device})
             return payload
         return None
 
@@ -545,14 +546,13 @@ class Aqueduct:
             ]
         ).encode()
 
-        self.send_and_wait_for_rx(
-            message, Events.CLEAR_SETUP.value, SOCKET_TX_ATTEMPTS)
+        self.send_and_wait_for_rx(message, Events.CLEAR_SETUP.value, SOCKET_TX_ATTEMPTS)
 
     def add_device(
         self,
         kind: DeviceTypes,
         name: typing.Optional[str] = None,
-        size: typing.Optional[int] = None
+        size: typing.Optional[int] = None,
     ):
         """
         Add a device to the setup.
@@ -583,8 +583,7 @@ class Aqueduct:
             ]
         ).encode()
 
-        self.send_and_wait_for_rx(
-            message, Events.ADD_DEVICE.value, SOCKET_TX_ATTEMPTS)
+        self.send_and_wait_for_rx(message, Events.ADD_DEVICE.value, SOCKET_TX_ATTEMPTS)
 
     def set_log_file_name(self, log_file_name: str):
         """Set the log file name."""
@@ -687,8 +686,7 @@ class Aqueduct:
                 SocketCommands.SocketMessage.value,
                 [
                     Events.SET_RECIPE_PROMPT.value,
-                    dict(
-                        prompt={**dict(user_id=self._user_id), **p.serialize()}),
+                    dict(prompt={**dict(user_id=self._user_id), **p.serialize()}),
                 ],
             ]
         ).encode()
@@ -751,8 +749,7 @@ class Aqueduct:
                 SocketCommands.SocketMessage.value,
                 [
                     Events.SET_RECIPE_INPUT.value,
-                    dict(
-                        input={**dict(user_id=self._user_id), **ipt.serialize()}),
+                    dict(input={**dict(user_id=self._user_id), **ipt.serialize()}),
                 ],
             ]
         ).encode()
@@ -855,8 +852,7 @@ class Aqueduct:
         message = json.dumps(
             [
                 SocketCommands.SocketMessage.value,
-                [Events.UPDATE_USER_PARAMS.value, dict(
-                    params=[setpoint.serialize()])],
+                [Events.UPDATE_USER_PARAMS.value, dict(params=[setpoint.serialize()])],
             ]
         ).encode()
 
@@ -918,8 +914,7 @@ class Aqueduct:
         message = json.dumps(
             [
                 SocketCommands.SocketMessage.value,
-                [Events.CLEAR_USER_RECORDABLES.value,
-                    dict(params=[recordable.name])],
+                [Events.CLEAR_USER_RECORDABLES.value, dict(params=[recordable.name])],
             ]
         ).encode()
 
@@ -1017,7 +1012,7 @@ class Aqueduct:
         :param controller: The PidController instance to register.
         :type controller: PidController
         """
-        controller.assign(self)
+        controller._assign(self)
 
     def create_pid_controller(self, controller: PidController):
         """
@@ -1029,17 +1024,15 @@ class Aqueduct:
         Raises:
             ValueError: if the PidController is not found.
         """
-        if not isinstance(controller._aq, Aqueduct): # pylint: disable=protected-access
-            controller.assign(self)
-
-        print(controller.serialize())
+        if not isinstance(controller._aq, Aqueduct):  # pylint: disable=protected-access
+            controller._assign(self)
 
         message = json.dumps(
             [
                 SocketCommands.SocketMessage.value,
                 [
                     Events.CREATE_PID_CONTROLLERS.value,
-                    dict(controllers=[controller.serialize()]),
+                    dict(controllers=[controller._serialize()]),
                 ],
             ]
         ).encode()
@@ -1054,7 +1047,7 @@ class Aqueduct:
             while isinstance(response, str):
                 response = json.loads(response)
             controller_id = int(list(response.get("controllers").keys())[0])
-            controller.set_id(controller_id)
+            controller._set_id(controller_id)
         except json.decoder.JSONDecodeError as error:
             warnings.warn(f"Failed to create PID controller: {error}")
 
@@ -1105,8 +1098,7 @@ class AqHelper:
             [SocketCommands.RegisterUser.value, self._aq.user_id]
         ).encode()
 
-        send_and_wait_for_rx(message, self._socket, None,
-                             OK, SOCKET_TX_ATTEMPTS)
+        send_and_wait_for_rx(message, self._socket, None, OK, SOCKET_TX_ATTEMPTS)
 
         message = json.dumps(
             [
@@ -1117,8 +1109,7 @@ class AqHelper:
             ]
         ).encode()
 
-        send_and_wait_for_rx(message, self._socket, None,
-                             OK, SOCKET_TX_ATTEMPTS)
+        send_and_wait_for_rx(message, self._socket, None, OK, SOCKET_TX_ATTEMPTS)
 
     def shutdown(self):
         """Shut down the `AqHelper` object."""
@@ -1140,8 +1131,7 @@ class AqHelper:
                     for packet in packets:
                         command = json.loads(packet)
                         if command[0] == Events.UPDATED_USER_PARAMS.value:
-                            self.handle_updated_user_params(
-                                json.loads(command[1]))
+                            self.handle_updated_user_params(json.loads(command[1]))
                     time.sleep(self._update_frequency_s)
             except BaseException as err:  # pylint: disable=broad-except
                 if self._aq.is_debug:
@@ -1210,11 +1200,11 @@ class AqManager:
 
         self._socket.connect((address, port))
 
-        message = json.dumps(
-            [SocketCommands.RegisterUser.value, user_id]).encode()
+        message = json.dumps([SocketCommands.RegisterUser.value, user_id]).encode()
 
-        response = send_and_wait_for_rx(message, self._socket, None,
-                                        OK, SOCKET_TX_ATTEMPTS)
+        response = send_and_wait_for_rx(
+            message, self._socket, None, OK, SOCKET_TX_ATTEMPTS
+        )
 
         print(response)
 
@@ -1227,8 +1217,7 @@ class AqManager:
             ]
         ).encode()
 
-        send_and_wait_for_rx(message, self._socket, None,
-                             OK, SOCKET_TX_ATTEMPTS)
+        send_and_wait_for_rx(message, self._socket, None, OK, SOCKET_TX_ATTEMPTS)
 
     @classmethod
     def code(cls) -> str:
