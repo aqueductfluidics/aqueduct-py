@@ -4,6 +4,8 @@ from typing import Tuple
 from typing import Union
 
 import aqueduct.devices.base.obj
+from aqueduct.core.pid import AccessorData
+from aqueduct.core.pid import AccessorKind
 from aqueduct.core.units import convert_mass_flow_values
 from aqueduct.core.units import get_mass_flow_conversion
 from aqueduct.core.units import MassFlowUnits
@@ -221,3 +223,25 @@ class MassFlowMeter(aqueduct.devices.base.obj.Device):
         :type units: MassFlowUnits
         """
         self.set_sim_data(values=None, roc=None, noise=noise, units=units)
+
+    def to_pid_process_value(
+        self,
+        index: int,
+        units: MassFlowUnits = MassFlowUnits.ML_MIN,
+    ) -> AccessorData:
+        """
+        Convert parameters to an AccessorData instance for use in PID controller.
+
+        :param index: The index of the accessor.
+        :type index: int
+        :param units: The units to be used (default is MassFlowUnits.ML_MIN).
+        :type units: MassFlowUnits, optional
+        :return: The AccessorData instance.
+        :rtype: AccessorData
+        """
+        return AccessorData(
+            kind=AccessorKind.MassFlow.value,
+            units=units.value,
+            device_id=self._device_id,
+            index=index,
+        )

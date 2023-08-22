@@ -26,6 +26,8 @@ from typing import List
 from typing import Tuple
 from typing import Union
 
+from aqueduct.core.pid import AccessorData
+from aqueduct.core.pid import AccessorKind
 from aqueduct.devices.base.obj import Device
 
 
@@ -196,3 +198,22 @@ class PhProbe(Device):
         :type noise: Union[List[Union[float, None]], Tuple]
         """
         self.set_sim_data(values=None, roc=None, noise=noise)
+
+    def to_pid_process_value(
+        self,
+        index: int,
+    ) -> AccessorData:
+        """
+        Convert parameters to an AccessorData instance for use in PID controller.
+
+        :param index: The index of the accessor.
+        :type index: int
+        :return: The AccessorData instance.
+        :rtype: AccessorData
+        """
+        return AccessorData(
+            kind=AccessorKind.Ph.value,
+            units=0,
+            device_id=self._device_id,
+            index=index,
+        )

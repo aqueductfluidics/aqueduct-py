@@ -1,14 +1,16 @@
 """
 Demonstration of setting up a PID controller with Aqueduct devices.
 """
-
 # Import necessary modules
 from aqueduct.core.aq import Aqueduct
 from aqueduct.core.aq import InitParams
-from aqueduct.core.pid import Pid, Schedule, Controller, ControllerSchedule
-from aqueduct.devices.valve.pinch import PinchValve
-from aqueduct.devices.pump.peristaltic import PeristalticPump
+from aqueduct.core.pid import Controller
+from aqueduct.core.pid import ControllerSchedule
+from aqueduct.core.pid import Pid
+from aqueduct.core.pid import Schedule
 from aqueduct.devices.pressure.transducer import PressureTransducer
+from aqueduct.devices.pump.peristaltic import PeristalticPump
+from aqueduct.devices.valve.pinch import PinchValve
 
 # Parse the initialization parameters from the command line
 params = InitParams.parse()
@@ -46,10 +48,10 @@ for error_range, control_range, delta_limit, dead_zone in [
     ((-250, 250), None, 0.0005, None),
     ((-10000, 0), None, 0.05, None),
     (None, (0, 0.3), 0.020, None),
-    (None, None, 0.050, None)
+    (None, None, 0.050, None),
 ]:
     controller = Controller()
-    controller.kp = -1.
+    controller.kp = -1.0
     controller.dead_zone = dead_zone
     controller.delta_limit = delta_limit
     cont_sched = ControllerSchedule()

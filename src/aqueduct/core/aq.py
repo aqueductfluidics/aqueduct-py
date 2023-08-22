@@ -73,14 +73,19 @@ class InitParams:
         ip_address (str): IP address.
         port (int): port number.
         init (bool): whether to initialize.
+        register_process (bool): whether to register the process with the
+            application to enable remote pause/resume of recipe.
     """
 
     user_id: typing.Union[int, str]
     ip_address: str
     port: int
     init: bool
+    register_process: bool
 
-    def __init__(self, user_id, ip_address, port, init) -> None:
+    def __init__(
+        self, user_id, ip_address, port, init, register_process: bool = True
+    ) -> None:
         """
         Initializes InitParams class.
 
@@ -89,11 +94,14 @@ class InitParams:
             ip_address (str): IP address.
             port (int): port number.
             init (bool): whether to initialize.
+            register_process (bool): whether to register the Python process with the
+                application to enable remote pause/resume of recipe.
         """
         self.user_id = user_id
         self.ip_address = ip_address
         self.port = port
         self.init = init
+        self.register_process = register_process
 
     @classmethod
     def parse(cls):
@@ -137,14 +145,23 @@ class InitParams:
             default=None,
         )
 
+        parser.add_argument(
+            "-r",
+            "--register",
+            type=int,
+            help="register process (1 for true, 0 for false)",
+            default=1,
+        )
+
         args = parser.parse_args()
 
         user_id = args.user_id
         ip_address = args.addr
         port = args.port
         init = bool(args.init)
+        register_process = bool(args.register)
 
-        return cls(user_id, ip_address, port, init)
+        return cls(user_id, ip_address, port, init, register_process)
 
 
 class Aqueduct:
@@ -160,6 +177,8 @@ class Aqueduct:
             default to the 'AQ_TCP_PORT' environment variable or 59000.
         pause (typing.Union[bool, None]): Whether to pause on queue. If None,
             it will default to the 'AQ_PAUSE_ON_QUEUE' environment variable or True.
+        register_process (typing.Union[bool, None]): whether to register the Python process with the
+                application to enable remote pause/resume of recipe.
 
     Attributes:
         devices (dict): A dictionary of devices controlled by Aqueduct.
@@ -195,6 +214,7 @@ class Aqueduct:
     _pause_on_queue: bool = False
     _serial_number: typing.Union[int, None] = None
     _application_version: typing.Union[str, None] = None
+    _register_process: typing.Union[bool, None] = None
 
     def __init__(
         self,
@@ -202,6 +222,7 @@ class Aqueduct:
         address: typing.Union[str, None] = None,
         port: typing.Union[int, None] = None,
         pause: typing.Union[bool, None] = None,
+        register_process: typing.Union[bool, None] = None,
     ):
         """
         Initializes an instance of Aqueduct.
@@ -224,6 +245,9 @@ class Aqueduct:
         if pause is None:
             pause = bool(int(os.environ.get("AQ_PAUSE_ON_QUEUE", 1)))
 
+        if register_process is None:
+            register_process = True
+
         self._user_id = user_id
         self._socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._socket_lock = threading.Lock()
@@ -236,6 +260,7 @@ class Aqueduct:
         self._address = address
         self._port = port
         self._pause_on_queue = pause
+        self._register_process = register_process
 
         if os.environ.get("AQ_SERIAL_NUMBER") is not None:
             self._serial_number = int(os.environ.get("AQ_SERIAL_NUMBER"))
@@ -379,6 +404,9 @@ class Aqueduct:
 
         self.get_setup(True)
 
+        if self._register_process is False:
+            return
+
         self._helper_t = threading.Thread(target=self._helper.run, daemon=True)
         self._helper_t.start()
 
@@ -426,6 +454,9 @@ class Aqueduct:
             self._application_version = payload.get("application_version")
         except TypeError:
             warnings.warn("Application version not found in response.")
+
+        if self._register_process is False:
+            return
 
         message = json.dumps(
             [
@@ -1202,11 +1233,9 @@ class AqManager:
 
         message = json.dumps([SocketCommands.RegisterUser.value, user_id]).encode()
 
-        response = send_and_wait_for_rx(
+        _response = send_and_wait_for_rx(
             message, self._socket, None, OK, SOCKET_TX_ATTEMPTS
         )
-
-        print(response)
 
         message = json.dumps(
             [

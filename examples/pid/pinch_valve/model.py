@@ -1,20 +1,27 @@
 """
 Demo code demonstrating pressure estimation using a simple model for Aqueduct devices.
 """
-
 # Import necessary modules
 import time
-from aqueduct.core.aq import Aqueduct, InitParams
-from aqueduct.devices.valve.pinch import PinchValve
-from aqueduct.devices.pump.peristaltic import PeristalticPump
-from aqueduct.devices.pressure.transducer import PressureTransducer, PressureUnits
+
+from aqueduct.core.aq import Aqueduct
+from aqueduct.core.aq import InitParams
 from aqueduct.devices.base.utils import DeviceTypes
+from aqueduct.devices.pressure.transducer import PressureTransducer
+from aqueduct.devices.pressure.transducer import PressureUnits
+from aqueduct.devices.pump.peristaltic import PeristalticPump
+from aqueduct.devices.valve.pinch import PinchValve
 
 # Parse the initialization parameters from the command line
 params = InitParams.parse()
 
 # Initialize the Aqueduct instance with the provided parameters
-aq = Aqueduct(params.user_id, params.ip_address, params.port)
+aq = Aqueduct(
+    params.user_id,
+    params.ip_address,
+    params.port,
+    register_process=params.register_process,
+)
 
 # Perform system initialization if specified
 aq.initialize(params.init)
@@ -103,12 +110,7 @@ class PressureModel:
         """
         p1 = self.calc_p1(self.pump.live[0].ml_min, self.pv.live[0].pct_open)
         p1 = min(p1, 50)
-        self.tdcr.set_sim_values(
-            values=(
-                p1,
-            ),
-            units=PressureUnits.PSI
-        )
+        self.tdcr.set_sim_values(values=(p1,), units=PressureUnits.PSI)
 
 
 # Create an instance of the PressureModel
