@@ -93,7 +93,8 @@ class Model:
 
     def calculate(self):
         """
-        Calculate the rate of change in pH for each reaction and update the pH probe simulation.
+        Calculate the rate of change in pH for each reaction and 
+        update the pH probe simulation.
         """
         rates = [p.live[0].ml_min for p in self.pumps]
 
