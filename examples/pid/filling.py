@@ -6,8 +6,8 @@ import time
 
 from aqueduct.core.aq import Aqueduct
 from aqueduct.core.aq import InitParams
-from aqueduct.core.pid import Controller
-from aqueduct.core.pid import ControllerSchedule
+from aqueduct.core.pid import ScheduleParameters
+from aqueduct.core.pid import ScheduleConstraints
 from aqueduct.core.pid import Pid
 from aqueduct.core.pid import PidController
 from aqueduct.core.pid import Schedule
@@ -59,11 +59,11 @@ process = bal.to_pid_process_value(index=0)
 control = pp.to_pid_control_value(index=0)
 
 # Create a PID controller
-controller = Controller()
-controller.kp = 10.0
-controller.kd = 5.0
-cont_sched = ControllerSchedule()
-sched = Schedule(controller, cont_sched)
+params = ScheduleParameters()
+params.kp = 10.0
+params.kd = 5.0
+constraints = ScheduleConstraints()
+sched = Schedule(params, constraints)
 pid = Pid(20)
 pid.output_limits = (0, 100)
 pid.add_schedule(sched)

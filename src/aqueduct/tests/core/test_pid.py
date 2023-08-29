@@ -2,7 +2,7 @@
 from unittest.mock import MagicMock
 
 import pytest
-from aqueduct.core.pid import Controller
+from aqueduct.core.pid import ScheduleParameters
 from aqueduct.core.pid import Pid
 from aqueduct.core.pid import PidController
 from aqueduct.core.pid import Schedule
@@ -134,7 +134,7 @@ def test_clear_integral_pid_controller_serialization(mock_aqueduct):
 
 
 def test_change_parameters_serialization(mock_pid_controller, mock_pid, mock_aqueduct):
-    schedule = Schedule(controller=Controller())
+    schedule = Schedule(controller=ScheduleParameters())
 
     mock_aqueduct.create_pid_controller(mock_pid_controller)
 

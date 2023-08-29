@@ -12,43 +12,6 @@ from aqueduct.devices.pressure.transducer import PressureUnits
 from aqueduct.devices.pump.peristaltic import PeristalticPump
 from aqueduct.devices.valve.pinch import PinchValve
 
-# Parse the initialization parameters from the command line
-params = InitParams.parse()
-
-# Initialize the Aqueduct instance with the provided parameters
-aq = Aqueduct(
-    params.user_id,
-    params.ip_address,
-    params.port,
-    register_process=params.register_process,
-)
-
-# Perform system initialization if specified
-aq.initialize(params.init)
-
-# Set a delay between sending commands to the pump
-aq.set_command_delay(0.05)
-
-# Define names for devices
-PUMP_NAME = "PP"
-XDCR_NAME = "TDCR"
-PV_NAME = "PV"
-
-# Clear the existing setup and add devices
-aq.clear_setup()
-
-aq.add_device(DeviceTypes.PERISTALTIC_PUMP, PUMP_NAME, 1)
-aq.add_device(DeviceTypes.PRESSURE_TRANSDUCER, XDCR_NAME, 1)
-aq.add_device(DeviceTypes.PINCH_VALVE, PV_NAME, 1)
-
-# Retrieve the setup to confirm the added devices
-aq.get_setup()
-
-# Retrieve device instances
-pp: PeristalticPump = aq.devices.get(PUMP_NAME)
-tdcr: PressureTransducer = aq.devices.get(XDCR_NAME)
-pv: PinchValve = aq.devices.get(PV_NAME)
-
 
 class PressureModel:
     """
@@ -61,13 +24,13 @@ class PressureModel:
     def __init__(
         self,
         pump: PeristalticPump,
-        pv: PinchValve,
-        tdcr: PressureTransducer,
+        pinch_valve: PinchValve,
+        transducer: PressureTransducer,
         aqueduct: "Aqueduct",
     ):
         self.pump = pump
-        self.pv = pv
-        self.tdcr = tdcr
+        self.pv = pinch_valve
+        self.tdcr = transducer
         self.aq = aqueduct
 
     @staticmethod
@@ -113,10 +76,49 @@ class PressureModel:
         self.tdcr.set_sim_values(values=(p1,), units=PressureUnits.PSI)
 
 
-# Create an instance of the PressureModel
-model = PressureModel(pp, pv, tdcr, aq)
+if __name__ == "__main__":
+    
+    # Parse the initialization parameters from the command line
+    params = InitParams.parse()
 
-# Continuous pressure calculation loop
-while True:
-    model.calc_pressures()
-    time.sleep(0.1)
+    # Initialize the Aqueduct instance with the provided parameters
+    aq = Aqueduct(
+        params.user_id,
+        params.ip_address,
+        params.port,
+        register_process=params.register_process,
+    )
+
+    # Perform system initialization if specified
+    aq.initialize(params.init)
+
+    # Set a delay between sending commands to the pump
+    aq.set_command_delay(0.05)
+
+    # Define names for devices
+    PUMP_NAME = "PP"
+    XDCR_NAME = "TDCR"
+    PV_NAME = "PV"
+
+    # Clear the existing setup and add devices
+    aq.clear_setup()
+
+    aq.add_device(DeviceTypes.PERISTALTIC_PUMP, PUMP_NAME, 1)
+    aq.add_device(DeviceTypes.PRESSURE_TRANSDUCER, XDCR_NAME, 1)
+    aq.add_device(DeviceTypes.PINCH_VALVE, PV_NAME, 1)
+
+    # Retrieve the setup to confirm the added devices
+    aq.get_setup()
+
+    # Retrieve device instances
+    pp: PeristalticPump = aq.devices.get(PUMP_NAME)
+    tdcr: PressureTransducer = aq.devices.get(XDCR_NAME)
+    pv: PinchValve = aq.devices.get(PV_NAME)
+
+    # Create an instance of the PressureModel
+    model = PressureModel(pp, pv, tdcr, aq)
+
+    # Continuous pressure calculation loop
+    while True:
+        model.calc_pressures()
+        time.sleep(0.1)

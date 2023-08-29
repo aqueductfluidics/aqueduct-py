@@ -27,6 +27,7 @@ class AccessorKind(Enum):
     PeristalticStatus = 7
     SyringeStatus = 8
     Position = 9
+    OpticalDensity = 10
 
 
 class AccessorData:
@@ -62,9 +63,9 @@ class AccessorData:
         return serialized
 
 
-class Controller:
+class ScheduleParameters:
     """
-    Class representing the parameterized PID controller.
+    Class representing the parameters for a controller schedule.
 
     Attributes:
         bias (float): The bias value.
@@ -219,9 +220,9 @@ class Controller:
         return serialized_data
 
 
-class ControllerSchedule:
+class ScheduleConstraints:
     """
-    Class representing the schedule parameters for a controller.
+    Class representing the schedule constraints for a Schedule.
 
     Attributes:
         process (Optional[Tuple[float, float]]): Process parameter schedule.
@@ -290,13 +291,13 @@ class Schedule:
 
     """
 
-    controller: Controller
-    schedule: ControllerSchedule
+    controller: ScheduleParameters
+    schedule: ScheduleConstraints
     _index: int
     _pid: "Pid"
 
     def __init__(
-        self, controller: Controller, schedule: Optional[ControllerSchedule] = None
+        self, controller: ScheduleParameters, schedule: Optional[ScheduleConstraints] = None
     ):
         """
         Initialize the Schedule instance.
@@ -309,7 +310,7 @@ class Schedule:
         """
         self.controller = controller
         if schedule is None:
-            schedule = ControllerSchedule()
+            schedule = ScheduleConstraints()
         self.schedule = schedule
 
     def _serialize(self) -> dict:

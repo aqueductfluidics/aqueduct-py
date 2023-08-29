@@ -29,12 +29,15 @@ import typing
 from enum import Enum
 
 import aqueduct.devices.balance
+import aqueduct.devices.mass_flow
 import aqueduct.devices.optical_density
 import aqueduct.devices.ph
 import aqueduct.devices.pressure.transducer
 import aqueduct.devices.pump.peristaltic
+import aqueduct.devices.temperature
 import aqueduct.devices.test_device
 import aqueduct.devices.valve.pinch
+import aqueduct.devices.valve.solenoid
 
 
 class DeviceTypes(Enum):

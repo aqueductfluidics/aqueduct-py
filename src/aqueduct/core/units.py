@@ -288,3 +288,13 @@ def convert_mass_flow_values(
     ]
 
     return tuple(converted_values)
+
+
+class OpticalDensityUnits(Enum):
+    """
+    Enumeration of optical density units.
+    """
+
+    OPTICAL_DENSITY = 0
+    TRANSMITTED = (1,)
+    NINETY = (2,)

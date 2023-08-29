@@ -4,8 +4,8 @@ Demonstration of setting up a PID controller with Aqueduct devices.
 # Import necessary modules
 from aqueduct.core.aq import Aqueduct
 from aqueduct.core.aq import InitParams
-from aqueduct.core.pid import Controller
-from aqueduct.core.pid import ControllerSchedule
+from aqueduct.core.pid import ScheduleParameters
+from aqueduct.core.pid import ScheduleConstraints
 from aqueduct.core.pid import Pid
 from aqueduct.core.pid import Schedule
 from aqueduct.devices.pressure.transducer import PressureTransducer
@@ -50,14 +50,14 @@ for error_range, control_range, delta_limit, dead_zone in [
     (None, (0, 0.3), 0.020, None),
     (None, None, 0.050, None),
 ]:
-    controller = Controller()
-    controller.kp = -1.0
-    controller.dead_zone = dead_zone
-    controller.delta_limit = delta_limit
-    cont_sched = ControllerSchedule()
-    cont_sched.error = error_range
-    cont_sched.control = control_range
-    sched = Schedule(controller, cont_sched)
+    params = ScheduleParameters()
+    params.kp = -1.0
+    params.dead_zone = dead_zone
+    params.delta_limit = delta_limit
+    constraints = ScheduleConstraints()
+    constraints.error = error_range
+    constraints.control = control_range
+    sched = Schedule(params, constraints)
     p.add_schedule(sched)
 
 # Set output limits for the PID controller

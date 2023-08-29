@@ -20,6 +20,9 @@ class TestImports:
 
         from aqueduct.core.units import PressureUnits
         from aqueduct.core.units import WeightUnits
+        from aqueduct.core.units import TemperatureUnits
+        from aqueduct.core.units import OpticalDensityUnits
+        from aqueduct.core.units import MassFlowUnits
 
         from aqueduct.devices.balance import Balance
 

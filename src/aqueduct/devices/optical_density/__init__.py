@@ -16,6 +16,9 @@ import enum
 from typing import Tuple
 
 import aqueduct.devices.base.obj
+from aqueduct.core.pid import AccessorData
+from aqueduct.core.pid import AccessorKind
+from aqueduct.core.units import OpticalDensityUnits
 
 
 class OpticalDensityProbeLiveKeys(enum.Enum):
@@ -160,6 +163,7 @@ class OpticalDensityProbe(aqueduct.devices.base.obj.Device):
         od_values = tuple(od for od, _, _ in all_values)
         return od_values
 
+    @property
     def transmitted(self) -> Tuple[float]:  # pylint: disable=invalid-name
         """
         Get the transmitted intensity values from all probes.
@@ -171,6 +175,7 @@ class OpticalDensityProbe(aqueduct.devices.base.obj.Device):
         transmitted_values = tuple(transmitted for _, transmitted, _ in all_values)
         return transmitted_values
 
+    @property
     def ninety_deg(self) -> Tuple[float]:  # pylint: disable=invalid-name
         """
         Get the 90 degree scattered intensity values from all probes.
@@ -181,3 +186,25 @@ class OpticalDensityProbe(aqueduct.devices.base.obj.Device):
         all_values = self.get_all_values()
         ninety_deg_values = tuple(ninety_deg for _, _, ninety_deg in all_values)
         return ninety_deg_values
+
+    def to_pid_process_value(
+        self,
+        index: int,
+        units: OpticalDensityUnits = OpticalDensityUnits.OPTICAL_DENSITY,
+    ) -> AccessorData:
+        """
+        Convert parameters to an AccessorData instance for use in PID controller.
+
+        :param index: The index of the accessor.
+        :type index: int
+        :param units: The optical density units to be used (default is OpticalDensityUnits.OPTICAL_DENSITY).
+        :type units: OpticalDensityUnits, optional
+        :return: The AccessorData instance.
+        :rtype: AccessorData
+        """
+        return AccessorData(
+            kind=AccessorKind.OpticalDensity.value,
+            units=units.value,
+            device_id=self._device_id,
+            index=index,
+        )

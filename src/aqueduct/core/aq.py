@@ -592,6 +592,8 @@ class Aqueduct:
         :type kind: str
         :param name: Name of the device, defaults to None
         :type name: str, optional
+        :param size: Number of `nodes` to create, defaults to None
+        :type size: int, optional
         """
         if size is None:
             size = 1
@@ -1043,6 +1045,7 @@ class Aqueduct:
         :param controller: The PidController instance to register.
         :type controller: PidController
         """
+        # pylint: disable=protected-access
         controller._assign(self)
 
     def create_pid_controller(self, controller: PidController):
@@ -1055,13 +1058,16 @@ class Aqueduct:
         Raises:
             ValueError: if the PidController is not found.
         """
-        if not isinstance(controller._aq, Aqueduct):  # pylint: disable=protected-access
+        # pylint: disable=protected-access
+        if not isinstance(controller._aq, Aqueduct):
+            # pylint: disable=protected-access
             controller._assign(self)
 
         message = json.dumps(
             [
                 SocketCommands.SocketMessage.value,
                 [
+                    # pylint: disable=protected-access
                     Events.CREATE_PID_CONTROLLERS.value,
                     dict(controllers=[controller._serialize()]),
                 ],
@@ -1072,6 +1078,7 @@ class Aqueduct:
             message,
             Events.CREATED_PID_CONTROLLERS.value,
             SOCKET_TX_ATTEMPTS,
+            delay_s=0.05
         )
 
         try:

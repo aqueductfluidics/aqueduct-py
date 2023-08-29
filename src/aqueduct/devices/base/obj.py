@@ -9,7 +9,6 @@ import time
 from abc import ABC
 from abc import abstractmethod
 from typing import Callable
-from typing import Optional
 from typing import TypeVar
 
 from aqueduct.core.socket_constants import Actions
