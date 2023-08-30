@@ -155,7 +155,7 @@ class PinchValve(aqueduct.devices.base.obj.Device):
         """
         return self.extract_live_as_tuple(PinchValveLiveKeys.pct_open.value)
 
-    def to_pid_control_value(
+    def to_pid_control_output(
         self,
         index: int,
     ) -> AccessorData:

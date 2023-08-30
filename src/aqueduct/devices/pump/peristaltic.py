@@ -362,7 +362,7 @@ class PeristalticPump(Device):
         """
         return self.extract_live_as_tuple(PeristalticPumpLiveKeys.ml_done.value)
 
-    def to_pid_control_value(
+    def to_pid_control_output(
         self,
         index: int,
         units: RateUnits = RateUnits.MlMin,

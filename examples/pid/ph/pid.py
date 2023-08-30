@@ -43,7 +43,7 @@ controllers = []
 for (i, pump) in enumerate([pump0, pump1, pump2]):
     # Define PID controller parameters
     process = ph_probe.to_pid_process_value(index=i)
-    control = pump.to_pid_control_value(index=0)
+    control = pump.to_pid_control_output(index=0)
     p = Pid(8)
 
     # Define multiple schedules with different controller settings

@@ -166,15 +166,17 @@ class TemperatureProbe(aqueduct.devices.base.obj.Device):
         """
         conversion = get_temperature_conversion(units, TemperatureUnits.CELSIUS)
 
-        def conversion_func(x):
+        # pylint: disable=invalid-name
+        def conversion_func1(x):
             return (x * conversion[0]) + conversion[1]
 
-        self._set_sim_data(values, None, None, 1.0, conversion_func)
+        self._set_sim_data(values, None, None, 1.0, conversion_func1)
 
-        def conversion_func(x):
+        # pylint: disable=invalid-name
+        def conversion_func2(x):
             return x * conversion[0]
 
-        self._set_sim_data(None, roc, noise, 1.0, conversion_func)
+        self._set_sim_data(None, roc, noise, 1.0, conversion_func2)
 
     def set_sim_values(
         self,

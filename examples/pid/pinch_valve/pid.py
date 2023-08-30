@@ -39,7 +39,7 @@ pv: PinchValve = aq.devices.get(PV_NAME)
 
 # Define PID controller parameters
 process = tdcr.to_pid_process_value(index=0)
-control = pv.to_pid_control_value(index=0)
+control = pv.to_pid_control_output(index=0)
 p = Pid(500)
 
 # Define multiple schedules with different controller settings

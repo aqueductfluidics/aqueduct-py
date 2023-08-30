@@ -56,7 +56,7 @@ pp.start(commands=commands)
 
 # Get process and control values for PID
 process = bal.to_pid_process_value(index=0)
-control = pp.to_pid_control_value(index=0)
+control = pp.to_pid_control_output(index=0)
 
 # Create a PID controller
 params = ScheduleParameters()
