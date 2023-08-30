@@ -4,10 +4,10 @@ Demonstration of setting up a PID controller with Aqueduct devices.
 # Import necessary modules
 from aqueduct.core.aq import Aqueduct
 from aqueduct.core.aq import InitParams
-from aqueduct.core.pid import ScheduleParameters
-from aqueduct.core.pid import ScheduleConstraints
 from aqueduct.core.pid import Pid
 from aqueduct.core.pid import Schedule
+from aqueduct.core.pid import ScheduleConstraints
+from aqueduct.core.pid import ScheduleParameters
 from aqueduct.devices.pressure.transducer import PressureTransducer
 from aqueduct.devices.pump.peristaltic import PeristalticPump
 from aqueduct.devices.valve.pinch import PinchValve

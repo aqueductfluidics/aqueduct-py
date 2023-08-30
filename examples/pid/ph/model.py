@@ -3,17 +3,17 @@ Description: This script models a chemical reaction system using threads for par
 It simulates the delay in the response of pH with respect to the change in dose rate, thereby
 modeling a time constant in the system.
 """
-
-import time
-import typing
+import argparse
 import random
 import threading
+import time
+import typing
 
 from aqueduct.core.aq import Aqueduct
 from aqueduct.core.aq import InitParams
 from aqueduct.devices.base.utils import DeviceTypes
-from aqueduct.devices.pump.peristaltic import PeristalticPump
 from aqueduct.devices.ph import PhProbe
+from aqueduct.devices.pump.peristaltic import PeristalticPump
 
 
 class Reaction:
@@ -56,14 +56,16 @@ class Reaction:
         """
         # Calculate the time since the reaction started
         reaction_duration_s = time.time() - self.reaction_start_time
-        
+
         # Calculate rate of change (roc)
-        roc = self.roc_offset + (self.dpH_s_dmL_min_start +
-                                 reaction_duration_s * self.delta_change_s) * ml_min
-        
+        roc = (
+            self.roc_offset
+            + (self.dpH_s_dmL_min_start + reaction_duration_s * self.delta_change_s)
+            * ml_min
+        )
+
         # Constrain roc within bounds
-        roc = max(min(roc, self.delta_change_bounds[1]),
-                  self.delta_change_bounds[0])
+        roc = max(min(roc, self.delta_change_bounds[1]), self.delta_change_bounds[0])
         roc = round(roc, 4)
         self.last_roc = roc
 
@@ -93,7 +95,7 @@ class Model:
 
     def calculate(self):
         """
-        Calculate the rate of change in pH for each reaction and 
+        Calculate the rate of change in pH for each reaction and
         update the pH probe simulation.
         """
         rates = [p.live[0].ml_min for p in self.pumps]
@@ -111,9 +113,7 @@ class Model:
             t.start()
 
         with self.lock:  # Acquire the lock before updating shared data
-            self.ph_probe.set_sim_rates_of_change([
-                r.last_roc for r in self.reactions
-            ])
+            self.ph_probe.set_sim_rates_of_change([r.last_roc for r in self.reactions])
 
 
 if __name__ == "__main__":
@@ -135,19 +135,33 @@ if __name__ == "__main__":
     # Set a delay between sending commands to the pump
     aq.set_command_delay(0.05)
 
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "-c",
+        "--clear",
+        type=int,
+        help="clear and create the setup (either 0 or 1)",
+        default=1,
+    )
+
+    args, _ = parser.parse_known_args()
+    clear = bool(args.clear)
+
     # Define names for devices
     PUMP0_NAME = "PUMP0"
     PUMP1_NAME = "PUMP1"
     PUMP2_NAME = "PUMP2"
     PH_PROBE_NAME = "PH_PROBE"
 
-    # Clear the existing setup and add devices
-    aq.clear_setup()
+    if clear:
+        # Clear the existing setup and add devices
+        aq.clear_setup()
 
-    aq.add_device(DeviceTypes.PERISTALTIC_PUMP, PUMP0_NAME, 1)
-    aq.add_device(DeviceTypes.PERISTALTIC_PUMP, PUMP1_NAME, 1)
-    aq.add_device(DeviceTypes.PERISTALTIC_PUMP, PUMP2_NAME, 1)
-    aq.add_device(DeviceTypes.PH_PROBE, PH_PROBE_NAME, 3)
+        aq.add_device(DeviceTypes.PERISTALTIC_PUMP, PUMP0_NAME, 1)
+        aq.add_device(DeviceTypes.PERISTALTIC_PUMP, PUMP1_NAME, 1)
+        aq.add_device(DeviceTypes.PERISTALTIC_PUMP, PUMP2_NAME, 1)
+        aq.add_device(DeviceTypes.PH_PROBE, PH_PROBE_NAME, 3)
 
     # Retrieve the setup to confirm the added devices
     aq.get_setup()
@@ -159,7 +173,7 @@ if __name__ == "__main__":
     ph_probe: PhProbe = aq.devices.get(PH_PROBE_NAME)
 
     ph_probe.set_sim_noise([0.0001, 0.0005, 0.0001])
-    ph_probe.set_sim_rates_of_change([-.1, -.1, -.1])
+    ph_probe.set_sim_rates_of_change([-0.1, -0.1, -0.1])
 
     # Create an instance of the PressureModel
     model = Model([pump0, pump1, pump2], ph_probe)

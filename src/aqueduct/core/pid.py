@@ -297,7 +297,9 @@ class Schedule:
     _pid: "Pid"
 
     def __init__(
-        self, controller: ScheduleParameters, schedule: Optional[ScheduleConstraints] = None
+        self,
+        controller: ScheduleParameters,
+        schedule: Optional[ScheduleConstraints] = None,
     ):
         """
         Initialize the Schedule instance.

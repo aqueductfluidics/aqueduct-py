@@ -6,11 +6,11 @@ import time
 
 from aqueduct.core.aq import Aqueduct
 from aqueduct.core.aq import InitParams
-from aqueduct.core.pid import ScheduleParameters
-from aqueduct.core.pid import ScheduleConstraints
 from aqueduct.core.pid import Pid
 from aqueduct.core.pid import PidController
 from aqueduct.core.pid import Schedule
+from aqueduct.core.pid import ScheduleConstraints
+from aqueduct.core.pid import ScheduleParameters
 from aqueduct.devices.balance import Balance
 from aqueduct.devices.base.utils import DeviceTypes
 from aqueduct.devices.pump.peristaltic import PeristalticPump

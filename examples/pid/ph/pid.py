@@ -4,12 +4,12 @@ Demonstration of setting up a PID controller with Aqueduct devices.
 # Import necessary modules
 from aqueduct.core.aq import Aqueduct
 from aqueduct.core.aq import InitParams
-from aqueduct.core.pid import ScheduleParameters
-from aqueduct.core.pid import ScheduleConstraints
 from aqueduct.core.pid import Pid
 from aqueduct.core.pid import Schedule
-from aqueduct.devices.pump.peristaltic import PeristalticPump
+from aqueduct.core.pid import ScheduleConstraints
+from aqueduct.core.pid import ScheduleParameters
 from aqueduct.devices.ph import PhProbe
+from aqueduct.devices.pump.peristaltic import PeristalticPump
 
 # Parse the initialization parameters from the command line
 params = InitParams.parse()
@@ -52,8 +52,8 @@ for (i, pump) in enumerate([pump0, pump1, pump2]):
     ]:
         params = ScheduleParameters()
         params.kp = 1
-        params.ki = .025
-        params.kd = .55
+        params.ki = 0.025
+        params.kd = 0.55
         params.dead_zone = dead_zone
         params.integral_valid = integral_valid
         constraints = ScheduleConstraints()

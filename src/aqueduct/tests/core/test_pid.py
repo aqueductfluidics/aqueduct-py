@@ -2,10 +2,10 @@
 from unittest.mock import MagicMock
 
 import pytest
-from aqueduct.core.pid import ScheduleParameters
 from aqueduct.core.pid import Pid
 from aqueduct.core.pid import PidController
 from aqueduct.core.pid import Schedule
+from aqueduct.core.pid import ScheduleParameters
 
 
 class TestPid:

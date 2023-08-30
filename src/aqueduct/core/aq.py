@@ -153,7 +153,7 @@ class InitParams:
             default=1,
         )
 
-        args = parser.parse_args()
+        args, _unknown = parser.parse_known_args()
 
         user_id = args.user_id
         ip_address = args.addr
@@ -1078,7 +1078,7 @@ class Aqueduct:
             message,
             Events.CREATED_PID_CONTROLLERS.value,
             SOCKET_TX_ATTEMPTS,
-            delay_s=0.05
+            delay_s=0.05,
         )
 
         try:

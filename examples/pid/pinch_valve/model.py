@@ -2,6 +2,7 @@
 Demo code demonstrating pressure estimation using a simple model for Aqueduct devices.
 """
 # Import necessary modules
+import argparse
 import time
 
 from aqueduct.core.aq import Aqueduct
@@ -77,7 +78,7 @@ class PressureModel:
 
 
 if __name__ == "__main__":
-    
+
     # Parse the initialization parameters from the command line
     params = InitParams.parse()
 
@@ -95,17 +96,31 @@ if __name__ == "__main__":
     # Set a delay between sending commands to the pump
     aq.set_command_delay(0.05)
 
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument(
+        "-c",
+        "--clear",
+        type=int,
+        help="clear and create the setup (either 0 or 1)",
+        default=1,
+    )
+
+    args, _ = parser.parse_known_args()
+    clear = bool(args.clear)
+
     # Define names for devices
     PUMP_NAME = "PP"
     XDCR_NAME = "TDCR"
     PV_NAME = "PV"
 
-    # Clear the existing setup and add devices
-    aq.clear_setup()
+    if clear:
+        # Clear the existing setup and add devices
+        aq.clear_setup()
 
-    aq.add_device(DeviceTypes.PERISTALTIC_PUMP, PUMP_NAME, 1)
-    aq.add_device(DeviceTypes.PRESSURE_TRANSDUCER, XDCR_NAME, 1)
-    aq.add_device(DeviceTypes.PINCH_VALVE, PV_NAME, 1)
+        aq.add_device(DeviceTypes.PERISTALTIC_PUMP, PUMP_NAME, 1)
+        aq.add_device(DeviceTypes.PRESSURE_TRANSDUCER, XDCR_NAME, 1)
+        aq.add_device(DeviceTypes.PINCH_VALVE, PV_NAME, 1)
 
     # Retrieve the setup to confirm the added devices
     aq.get_setup()

@@ -1,7 +1,5 @@
-import pytest
 from unittest.mock import Mock
-from aqueduct.devices.base.obj import Device, Interface, DeviceKeys, DeviceBaseKeys
-from aqueduct.devices.base.utils import create_device, DeviceTypes
+
 import aqueduct.devices.balance
 import aqueduct.devices.optical_density
 import aqueduct.devices.ph
@@ -11,6 +9,13 @@ import aqueduct.devices.temperature
 import aqueduct.devices.test_device
 import aqueduct.devices.valve.pinch
 import aqueduct.devices.valve.solenoid
+import pytest
+from aqueduct.devices.base.obj import Device
+from aqueduct.devices.base.obj import DeviceBaseKeys
+from aqueduct.devices.base.obj import DeviceKeys
+from aqueduct.devices.base.obj import Interface
+from aqueduct.devices.base.utils import create_device
+from aqueduct.devices.base.utils import DeviceTypes
 
 
 @pytest.fixture
@@ -30,9 +35,9 @@ def test_device_init(mock_socket, mock_lock):
             DeviceBaseKeys.UserId.value: "user_id",
             DeviceBaseKeys.Type.value: "type",
             DeviceBaseKeys.Name.value: "name",
-            DeviceBaseKeys.Interface.value: Interface.Sim
+            DeviceBaseKeys.Interface.value: Interface.Sim,
         },
-        DeviceKeys.Live.value: [1, 2, 3]  # Example live data
+        DeviceKeys.Live.value: [1, 2, 3],  # Example live data
     }
 
     device = Device(mock_socket, mock_lock, **kwargs)
