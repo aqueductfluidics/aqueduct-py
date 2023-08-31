@@ -13,9 +13,9 @@ from aqueduct.devices.pressure.transducer import PressureTransducer
 class PressureModel:
     """
     This simple model estimates the pressures:
-        - P1, feed (between feed pump and TFF feed input)
-        - P2, retentate (between TFF ret. and PV)
-        - P3, permeate (between TFF perm. and permeate pump)
+        - feed (between feed pump and TFF feed input)
+        - retentate (between TFF retentate outlet and PV)
+        - permeate (between TFF permeate outlet and permeate pump)
     using the current pump flow rates and pinch valve position
     as input parameters.
 
@@ -24,9 +24,9 @@ class PressureModel:
            P1 - P2 for known flow rates
         2. model Cv of the pinch valve using a non-linear expression that decreases
            as ~(% open)**-2 with an onset pct open of 0.3 (30%)
-        3. calculate P2 assuming atmospheric output pressure and using Cv pinch valve
-        4. calculate P1 using P2 and Cv TFF pass through
-        5. calculate P3 (permeate) using the expression for TMP
+        3. calculate retentate pressure assuming atmospheric output pressure and using Cv pinch valve
+        4. calculate feed pressure using retentate pressure and Cv TFF pass through
+        5. calculate permeate pressure using the expression for TMP
 
     :ivar filtration_start_time: Start time of the filtration process.
     :vartype filtration_start_time: float
@@ -69,21 +69,21 @@ class PressureModel:
             return 100
 
     @staticmethod
-    def calc_delta_p_rententate(R1, PV) -> float:
+    def calc_delta_p_rententate(feed_rate_ml_min, pinch_valve_position) -> float:
         """
-        Calculate the pressure drop between retentate and permeate.
+        Calculate the pressure drop between retentate and atmospheric output.
 
-        :param R1: Flow rate in the pass-through leg of the TFF filter.
-        :type R1: float
+        :param feed_rate_ml_min: Flow rate in the pass-through leg of the TFF filter.
+        :type feed_rate_ml_min: float
 
-        :param PV: Pinch valve position.
-        :type PV: float
+        :param pinch_valve_position: Pinch valve position.
+        :type pinch_valve_position: float
 
         :return: Pressure drop between retentate and permeate.
         :rtype: float
         """
         try:
-            return 1 / (PressureModel.calc_pv_cv(PV) * 0.865 / R1) ** 2
+            return 1 / (PressureModel.calc_pv_cv(pinch_valve_position) * 0.865 / feed_rate_ml_min) ** 2
         except ZeroDivisionError:
             return 0
 
@@ -122,7 +122,12 @@ class PressureModel:
         return PressureModel.calc_delta_p_rententate(R1, PV)
 
     @staticmethod
-    def calc_permeate_pressure(P1, P2, R1, R3) -> float:
+    def calc_permeate_pressure(
+        feed_pressure_psi: float,
+        retentate_pressure_psi: float,
+        feed_rate_ml_min: float,
+        permeate_rate_ml_min: float
+    ) -> float:
         """
         Calculate the P3 pressure.
 
@@ -144,7 +149,7 @@ class PressureModel:
         :rtype: float
         """
         try:
-            return (P1 + P2) / 2 - R3**2 / R1 * 3.9
+            return (feed_pressure_psi + retentate_pressure_psi) / 2 - permeate_rate_ml_min**2 / feed_rate_ml_min * 3.9
         except ZeroDivisionError:
             return 0
 
@@ -158,10 +163,13 @@ class PressureModel:
         """
         retentate_pressure = PressureModel.calc_retentate_pressure(
             feed_pump_ml_min, pinch_valve_position)
+
         feed_pressure = self.calc_feed_pressure(
             feed_pump_ml_min, pinch_valve_position, retentate_pressure)
+
         permeate_pressure = PressureModel.calc_permeate_pressure(
             feed_pressure, retentate_pressure, feed_pump_ml_min, permeate_pump_ml_min)
+
         feed_pressure, retentate_pressure, permeate_pressure = min(
             feed_pressure, 50), min(retentate_pressure, 50), min(permeate_pressure, 50)
 
@@ -244,10 +252,9 @@ class Model:
 
         feed_pressure, retentate_pressure, permeate_pressure = self.pressure_model.calc_pressures(
             feed_pump_ml_min, permeate_pump_ml_min, pv_position)
-        
+
         self.transducers.set_sim_values(
             [feed_pressure, retentate_pressure, permeate_pressure], PressureUnits.PSI)
-
 
 
 if __name__ == "__main__":
@@ -289,7 +296,8 @@ if __name__ == "__main__":
     transducers.set_sim_noise([0.0001, 0.0001, 0.0001])
 
     # Create an instance of the PressureModel
-    model = Model(feed_pump, permeate_pump, buffer_pump, balances, transducers, pinch_valve)
+    model = Model(feed_pump, permeate_pump, buffer_pump,
+                  balances, transducers, pinch_valve)
 
     # Continuous pressure calculation loop
     while True:
