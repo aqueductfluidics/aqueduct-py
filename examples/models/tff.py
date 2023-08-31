@@ -1,5 +1,6 @@
 import typing
 import time
+import math
 
 from aqueduct.core.aq import Aqueduct
 from aqueduct.core.aq import InitParams
@@ -35,22 +36,40 @@ class PressureModel:
     :vartype filter_cv_retentate: float
     """
 
-    filter_cv_retentate: float = 60
+    filter_cv_retentate: float = .87
 
-    def calc_delta_p_feed_rententate(self, feed_rate_ml_min: float) -> float:
+    @staticmethod
+    def cv_from_diameter_mm(diameter: float) -> float:
+        Cv = (((diameter / 1000) ** 2) * 0.61) * 46250.9
+        return Cv
+
+    @staticmethod
+    def cv_from_area_mm(area_mm: float) -> float:
+        # Convert the area from mm^2 to m^2
+        area_m = area_mm * 1e-6
+        
+        # Calculate the diameter from the area
+        diameter_m = math.sqrt((4 * area_m) / math.pi)
+                
+        # Calculate Cv using the given formula
+        Cv = (((diameter_m) ** 2) * 0.61) * 46250.9
+    
+        return Cv
+    
+    @staticmethod
+    def delta_area(delta_height):
         """
-        Calculate the pressure drop between feed and retentate.
+        Calculate the new cross-sectional area of a tube when it's squeezed, based on the change in height.
 
-        :param feed_rate_ml_min: Flow rate in the pass-through leg of the TFF filter.
-        :type feed_rate_ml_min: float
+        Parameters:
+        original_diameter_mm (float): The original diameter of the tube in mm.
+        original_height_mm (float): The original height of the tube in mm.
+        delta_height_mm (float): The change in height due to the squeeze in mm.
 
-        :return: Pressure drop between feed and retentate.
-        :rtype: float
+        Returns:
+        float: The new cross-sectional area in mm^2.
         """
-        try:
-            return 1 / (self.filter_cv_retentate * 0.865 / feed_rate_ml_min) ** 2
-        except ZeroDivisionError:
-            return 0
+        return math.pi * delta_height * (1 - delta_height)
 
     @staticmethod
     def calc_pv_cv(position: float) -> float:
@@ -64,14 +83,51 @@ class PressureModel:
         :rtype: float
         """
         if position < 0.30:
-            return max(100 - (1 / position**2), 1)
+            area = (math.pi * (5 / 2)**2)  * (1 - PressureModel.delta_area(0.3 - position))
+            return PressureModel.cv_from_area_mm(area_mm=area)
         else:
             return 100
 
     @staticmethod
-    def calc_delta_p_rententate(feed_rate_ml_min, pinch_valve_position) -> float:
+    def calc_delta_p_psi(mass_flow_rate_ml_min: float, cv: float) -> float:
         """
-        Calculate the pressure drop between retentate and atmospheric output.
+        Calculate the pressure drop between through a restriction
+        using the metric equivalent flow factor (Kv) equation:
+
+        Kv = Q * sqrt(SG / ΔP)
+
+        Where:
+        Kv : Flow factor (m^3/h)
+        Q : Flowrate (m^3/h)
+        SG : Specific gravity of the fluid (for water = 1)
+        ΔP : Differential pressure across the device (bar)
+
+        Kv can be calculated from Cv (Flow Coefficient) using the equation:
+        Kv = 0.865 * Cv
+
+        :param mass_flow_rate_ml_min: Flowrate.
+        :type mass_flow_rate_ml_min: float
+
+        :param cv: Flow Coefficient.
+        :type cv: float
+
+        :return: Pressure drop (psi).
+        :rtype: float
+        """
+        try:
+            kv = 0.865 * cv
+            # Convert mL/min to m^3/h
+            delta_p_bar = 1 / (kv / (mass_flow_rate_ml_min / 60.0)) ** 2
+            delta_p_psi = delta_p_bar * 14.5038  # Convert bar to psi
+            return delta_p_psi
+        except ZeroDivisionError:
+            return 0
+
+    @staticmethod
+    def calc_delta_p_rententate_psi(feed_rate_ml_min: float, pinch_valve_position: float) -> float:
+        """
+        Calculate the pressure drop between retentate and atmospheric output 
+        using the metric equivalent flow factor (Kv) equation:
 
         :param feed_rate_ml_min: Flow rate in the pass-through leg of the TFF filter.
         :type feed_rate_ml_min: float
@@ -79,77 +135,53 @@ class PressureModel:
         :param pinch_valve_position: Pinch valve position.
         :type pinch_valve_position: float
 
-        :return: Pressure drop between retentate and permeate.
+        :return: Pressure drop between retentate and atmospheric outlet.
         :rtype: float
         """
-        try:
-            return 1 / (PressureModel.calc_pv_cv(pinch_valve_position) * 0.865 / feed_rate_ml_min) ** 2
-        except ZeroDivisionError:
-            return 0
+        cv = PressureModel.calc_pv_cv(pinch_valve_position)
+        return PressureModel.calc_delta_p_psi(feed_rate_ml_min, cv)
 
-    def calc_feed_pressure(self, R1, PV, P2) -> float:
+    def calc_feed_pressure_psi(self, feed_rate_ml_min: float, retentate_pressure_psi: float) -> float:
         """
-        Calculate the P1 pressure.
+        Calculate the feed pressure.
 
-        :param R1: Flow rate in the pass-through leg of the TFF filter.
-        :type R1: float
+        :param feed_rate_ml_min: Flow rate in the pass-through leg of the TFF filter (ml/min).
+        :type feed_rate_ml_min: float
 
-        :param PV: Pinch valve position.
-        :type PV: float
-
-        :param P2: P2 pressure.
+        :param retentate_pressure_psi: Retentate pressure (psi).
         :type P2: float
 
         :return: P1 pressure.
         :rtype: float
         """
-        return P2 + self.calc_delta_p_rententate(R1, PV)
-
-    @staticmethod
-    def calc_retentate_pressure(R1, PV) -> float:
-        """
-        Calculate the P2 pressure.
-
-        :param R1: Flow rate in the pass-through leg of the TFF filter.
-        :type R1: float
-
-        :param PV: Pinch valve position.
-        :type PV: float
-
-        :return: P2 pressure.
-        :rtype: float
-        """
-        return PressureModel.calc_delta_p_rententate(R1, PV)
+        return retentate_pressure_psi + self.calc_delta_p_psi(feed_rate_ml_min, PressureModel.filter_cv_retentate)
 
     @staticmethod
     def calc_permeate_pressure(
         feed_pressure_psi: float,
         retentate_pressure_psi: float,
-        feed_rate_ml_min: float,
         permeate_rate_ml_min: float
     ) -> float:
         """
-        Calculate the P3 pressure.
+        Calculate the permeate pressure pressure.
 
         https://aiche.onlinelibrary.wiley.com/doi/epdf/10.1002/btpr.3084
 
-        :param P1: P1 pressure.
-        :type P1: float
+        :param feed_pressure_psi: Feed pressure.
+        :type feed_pressure_psi: float
 
-        :param P2: P2 pressure.
-        :type P2: float
+        :param retentate_pressure_psi: Retentate pressure.
+        :type retentate_pressure_psi: float
 
-        :param R1: Flow rate in the pass-through leg of the TFF filter.
-        :type R1: float
+        :param permeate_rate_ml_min: Permeate flow rate.
+        :type permeate_rate_ml_min: float
 
-        :param R3: Flow rate in the permeate leg of the TFF filter.
-        :type R3: float
-
-        :return: P3 pressure.
+        :return: Premeate pressure (psi).
         :rtype: float
         """
         try:
-            return (feed_pressure_psi + retentate_pressure_psi) / 2 - permeate_rate_ml_min**2 / feed_rate_ml_min * 3.9
+            tmp_psi = (feed_pressure_psi + retentate_pressure_psi) / 2
+            return tmp_psi - permeate_rate_ml_min * .8
         except ZeroDivisionError:
             return 0
 
@@ -161,17 +193,17 @@ class PressureModel:
         """
         Calculate and update the pressures using the model equations.
         """
-        retentate_pressure = PressureModel.calc_retentate_pressure(
+        retentate_pressure_psi = PressureModel.calc_delta_p_rententate_psi(
             feed_pump_ml_min, pinch_valve_position)
 
-        feed_pressure = self.calc_feed_pressure(
-            feed_pump_ml_min, pinch_valve_position, retentate_pressure)
+        feed_pressure_psi = self.calc_feed_pressure_psi(
+            feed_pump_ml_min, retentate_pressure_psi)
 
-        permeate_pressure = PressureModel.calc_permeate_pressure(
-            feed_pressure, retentate_pressure, feed_pump_ml_min, permeate_pump_ml_min)
+        permeate_pressure_psi = PressureModel.calc_permeate_pressure(
+            feed_pressure_psi, retentate_pressure_psi, permeate_pump_ml_min)
 
         feed_pressure, retentate_pressure, permeate_pressure = min(
-            feed_pressure, 50), min(retentate_pressure, 50), min(permeate_pressure, 50)
+            feed_pressure_psi, 50), min(retentate_pressure_psi, 50), min(permeate_pressure_psi, 50)
 
         return (feed_pressure, retentate_pressure, permeate_pressure)
 
