@@ -50,26 +50,31 @@ class PressureModel:
         
         # Calculate the diameter from the area
         diameter_m = math.sqrt((4 * area_m) / math.pi)
-                
+
         # Calculate Cv using the given formula
         Cv = (((diameter_m) ** 2) * 0.61) * 46250.9
     
         return Cv
     
     @staticmethod
-    def delta_area(delta_height):
+    def occluded_area_pct(delta_h: float) -> float:
         """
-        Calculate the new cross-sectional area of a tube when it's squeezed, based on the change in height.
+        Calculate the percentage change in cross-sectional area of a tube when it's squeezed, based on the change in height.
+
+        See: https://www.hindawi.com/journals/mpe/2015/547492/
 
         Parameters:
-        original_diameter_mm (float): The original diameter of the tube in mm.
-        original_height_mm (float): The original height of the tube in mm.
-        delta_height_mm (float): The change in height due to the squeeze in mm.
+        delta_h (float): The change in height due to the squeeze as a fraction of the original height (ranging from 0 to 1).
 
         Returns:
-        float: The new cross-sectional area in mm^2.
+        float: The percentage change in the new cross-sectional area, scaled between 0 and 1. 
+            1 indicates maximum occlusion (tube completely flat), 
+            0 indicates no occlusion (tube retains original shape).
         """
-        return math.pi * delta_height * (1 - delta_height)
+        x = max(.5 - delta_h, 0)
+        oc = math.pi * x * (math.sqrt(-20 * x**2 + 12 * x + 3) / 6 - (2 * x / 3) + 0.5)
+        oc = min(-1 * (oc-0.7853981633974483), 1)
+        return oc
 
     @staticmethod
     def calc_pv_cv(position: float) -> float:
@@ -82,8 +87,10 @@ class PressureModel:
         :return: Cv of the pinch valve.
         :rtype: float
         """
-        if position < 0.30:
-            area = (math.pi * (5 / 2)**2)  * (1 - PressureModel.delta_area(0.3 - position))
+        response_zone = 0.35
+
+        if position < response_zone:
+            area = (math.pi * (5 / 2)**2)  * (1 - PressureModel.occluded_area_pct((response_zone - position)/response_zone))
             return PressureModel.cv_from_area_mm(area_mm=area)
         else:
             return 100
