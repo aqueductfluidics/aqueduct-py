@@ -187,8 +187,8 @@ class PressureModel:
         :rtype: float
         """
         try:
-            tmp_psi = (feed_pressure_psi + retentate_pressure_psi) / 2
-            return tmp_psi - permeate_rate_ml_min * .8
+            avg_psi = (feed_pressure_psi + retentate_pressure_psi) / 2
+            return avg_psi - permeate_rate_ml_min * .8
         except ZeroDivisionError:
             return 0
 
