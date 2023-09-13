@@ -15,9 +15,20 @@ def test_init_params_initialization():
 
 def test_init_params_parse_all_arguments(monkeypatch):
     """Test parsing with all arguments"""
-    testargs = ["prog", "-u", "1", "-a", "127.0.0.1",
-                "-p", "8080", "-i", "1", "-r", "0"]
-    monkeypatch.setattr('sys.argv', testargs)
+    testargs = [
+        "prog",
+        "-u",
+        "1",
+        "-a",
+        "127.0.0.1",
+        "-p",
+        "8080",
+        "-i",
+        "1",
+        "-r",
+        "0",
+    ]
+    monkeypatch.setattr("sys.argv", testargs)
 
     params = InitParams.parse()
 
@@ -31,7 +42,7 @@ def test_init_params_parse_all_arguments(monkeypatch):
 def test_init_params_parse_missing_optional_args(monkeypatch):
     """Test parsing with missing optional arguments (defaults should be used)"""
     testargs = ["prog", "-u", "1", "-a", "127.0.0.1", "-p", "8080", "-i", "1"]
-    monkeypatch.setattr('sys.argv', testargs)
+    monkeypatch.setattr("sys.argv", testargs)
 
     params = InitParams.parse()
 
@@ -41,7 +52,7 @@ def test_init_params_parse_missing_optional_args(monkeypatch):
 def test_init_params_parse_no_args(monkeypatch):
     """Test parsing with no arguments (all should be None or default)"""
     testargs = ["prog"]
-    monkeypatch.setattr('sys.argv', testargs)
+    monkeypatch.setattr("sys.argv", testargs)
 
     params = InitParams.parse()
 

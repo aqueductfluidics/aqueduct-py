@@ -1,14 +1,14 @@
-import typing
-import time
 import math
+import time
+import typing
 
 from aqueduct.core.aq import Aqueduct
 from aqueduct.core.aq import InitParams
 from aqueduct.core.units import PressureUnits
-from aqueduct.devices.pump.peristaltic import PeristalticPump
 from aqueduct.devices.balance import Balance
-from aqueduct.devices.valve.pinch import PinchValve
 from aqueduct.devices.pressure.transducer import PressureTransducer
+from aqueduct.devices.pump.peristaltic import PeristalticPump
+from aqueduct.devices.valve.pinch import PinchValve
 
 
 class PressureModel:
@@ -36,7 +36,7 @@ class PressureModel:
     :vartype filter_cv_retentate: float
     """
 
-    filter_cv_retentate: float = .87
+    filter_cv_retentate: float = 0.87
 
     @staticmethod
     def cv_from_diameter_mm(diameter: float) -> float:
@@ -47,15 +47,15 @@ class PressureModel:
     def cv_from_area_mm(area_mm: float) -> float:
         # Convert the area from mm^2 to m^2
         area_m = area_mm * 1e-6
-        
+
         # Calculate the diameter from the area
         diameter_m = math.sqrt((4 * area_m) / math.pi)
 
         # Calculate Cv using the given formula
         Cv = (((diameter_m) ** 2) * 0.61) * 46250.9
-    
+
         return Cv
-    
+
     @staticmethod
     def occluded_area_pct(delta_h: float) -> float:
         """
@@ -67,13 +67,15 @@ class PressureModel:
         delta_h (float): The change in height due to the squeeze as a fraction of the original height (ranging from 0 to 1).
 
         Returns:
-        float: The percentage change in the new cross-sectional area, scaled between 0 and 1. 
-            1 indicates maximum occlusion (tube completely flat), 
+        float: The percentage change in the new cross-sectional area, scaled between 0 and 1.
+            1 indicates maximum occlusion (tube completely flat),
             0 indicates no occlusion (tube retains original shape).
         """
-        x = max(.5 - delta_h, 0)
-        oc = math.pi * x * (math.sqrt(-20 * x**2 + 12 * x + 3) / 6 - (2 * x / 3) + 0.5)
-        oc = min(-1 * (oc-0.7853981633974483), 1)
+        x = max(0.5 - delta_h, 0)
+        oc = (
+            math.pi * x * (math.sqrt(-20 * x**2 + 12 * x + 3) / 6 - (2 * x / 3) + 0.5)
+        )
+        oc = min(-1 * (oc - 0.7853981633974483), 1)
         return oc
 
     @staticmethod
@@ -90,7 +92,12 @@ class PressureModel:
         response_zone = 0.35
 
         if position < response_zone:
-            area = (math.pi * (5 / 2)**2)  * (1 - PressureModel.occluded_area_pct((response_zone - position)/response_zone))
+            area = (math.pi * (5 / 2) ** 2) * (
+                1
+                - PressureModel.occluded_area_pct(
+                    (response_zone - position) / response_zone
+                )
+            )
             return PressureModel.cv_from_area_mm(area_mm=area)
         else:
             return 100
@@ -131,9 +138,11 @@ class PressureModel:
             return 0
 
     @staticmethod
-    def calc_delta_p_rententate_psi(feed_rate_ml_min: float, pinch_valve_position: float) -> float:
+    def calc_delta_p_rententate_psi(
+        feed_rate_ml_min: float, pinch_valve_position: float
+    ) -> float:
         """
-        Calculate the pressure drop between retentate and atmospheric output 
+        Calculate the pressure drop between retentate and atmospheric output
         using the metric equivalent flow factor (Kv) equation:
 
         :param feed_rate_ml_min: Flow rate in the pass-through leg of the TFF filter.
@@ -148,7 +157,9 @@ class PressureModel:
         cv = PressureModel.calc_pv_cv(pinch_valve_position)
         return PressureModel.calc_delta_p_psi(feed_rate_ml_min, cv)
 
-    def calc_feed_pressure_psi(self, feed_rate_ml_min: float, retentate_pressure_psi: float) -> float:
+    def calc_feed_pressure_psi(
+        self, feed_rate_ml_min: float, retentate_pressure_psi: float
+    ) -> float:
         """
         Calculate the feed pressure.
 
@@ -161,13 +172,15 @@ class PressureModel:
         :return: P1 pressure.
         :rtype: float
         """
-        return retentate_pressure_psi + self.calc_delta_p_psi(feed_rate_ml_min, PressureModel.filter_cv_retentate)
+        return retentate_pressure_psi + self.calc_delta_p_psi(
+            feed_rate_ml_min, PressureModel.filter_cv_retentate
+        )
 
     @staticmethod
     def calc_permeate_pressure(
         feed_pressure_psi: float,
         retentate_pressure_psi: float,
-        permeate_rate_ml_min: float
+        permeate_rate_ml_min: float,
     ) -> float:
         """
         Calculate the permeate pressure pressure.
@@ -188,44 +201,62 @@ class PressureModel:
         """
         try:
             avg_psi = (feed_pressure_psi + retentate_pressure_psi) / 2
-            return avg_psi - permeate_rate_ml_min * .8
+            return avg_psi - permeate_rate_ml_min * 0.8
         except ZeroDivisionError:
             return 0
 
-    def calc_pressures(self,
-                       feed_pump_ml_min: float,
-                       permeate_pump_ml_min: float,
-                       pinch_valve_position: float,
-                       ):
+    def calc_pressures(
+        self,
+        feed_pump_ml_min: float,
+        permeate_pump_ml_min: float,
+        pinch_valve_position: float,
+    ):
         """
         Calculate and update the pressures using the model equations.
         """
         retentate_pressure_psi = PressureModel.calc_delta_p_rententate_psi(
-            feed_pump_ml_min, pinch_valve_position)
+            feed_pump_ml_min, pinch_valve_position
+        )
 
         feed_pressure_psi = self.calc_feed_pressure_psi(
-            feed_pump_ml_min, retentate_pressure_psi)
+            feed_pump_ml_min, retentate_pressure_psi
+        )
 
         permeate_pressure_psi = PressureModel.calc_permeate_pressure(
-            feed_pressure_psi, retentate_pressure_psi, permeate_pump_ml_min)
+            feed_pressure_psi, retentate_pressure_psi, permeate_pump_ml_min
+        )
 
-        feed_pressure, retentate_pressure, permeate_pressure = min(
-            feed_pressure_psi, 50), min(retentate_pressure_psi, 50), min(permeate_pressure_psi, 50)
+        feed_pressure, retentate_pressure, permeate_pressure = (
+            min(feed_pressure_psi, 50),
+            min(retentate_pressure_psi, 50),
+            min(permeate_pressure_psi, 50),
+        )
 
         return (feed_pressure, retentate_pressure, permeate_pressure)
 
 
 class Model:
     """
-    Main class to manage multiple Reactions and link them with physical devices.
+    This class manages the simulation model for a Tangential Flow Filtration (TFF) system.
+    It integrates various components such as feed, permeate, and buffer pumps, balances for
+    fluid levels, pressure transducers, and a pinch valve. It also contains methods to compute
+    derived values for these components based on real-time simulation parameters.
 
     Attributes:
-        reactions: List of Reaction objects.
-        delayed_roc: List of delayed rate of change values.
-        pumps: List of PeristalticPump objects.
-        ph_probe: PhProbe object.
-        lock: Threading lock to control concurrent access to shared resources.
+        buffer_balance_index (int): Index for the buffer balance.
+        feed_balance_index (int): Index for the feed balance.
+        permeate_balance_index (int): Index for the permeate balance.
+
+        feed_transducer_index (int): Index for the feed pressure transducer.
+        permeate_transducer_index (int): Index for the permeate pressure transducer.
+        retentate_transducer_index (int): Index for the retentate pressure transducer.
+
+        buffer_scale_error_pct (float): Error percentage for the buffer scale.
+        retentate_scale_error_pct (float): Error percentage for the retentate scale.
+
+        pressure_model (PressureModel): An instance of PressureModel to handle pressure calculations.
     """
+
     buffer_balance_index: int = 1
     feed_balance_index: int = 0
     permeate_balance_index: int = 2
@@ -239,15 +270,26 @@ class Model:
 
     pressure_model: PressureModel
 
-    def __init__(self,
-                 feed_pump: PeristalticPump,
-                 permeate_pump: PeristalticPump,
-                 buffer_pump: typing.Union[PeristalticPump, None],
-                 balances: Balance,
-                 transducers: PressureTransducer,
-                 pinch_valve: PinchValve
-                 ):
-        """Initialize the model."""
+    def __init__(
+        self,
+        feed_pump: PeristalticPump,
+        permeate_pump: PeristalticPump,
+        buffer_pump: typing.Union[PeristalticPump, None],
+        balances: Balance,
+        transducers: PressureTransducer,
+        pinch_valve: PinchValve,
+    ):
+        """
+        Initialize the Model with given pumps, balances, transducers, and pinch valve.
+
+        Args:
+            feed_pump (PeristalticPump): The feed pump object.
+            permeate_pump (PeristalticPump): The permeate pump object.
+            buffer_pump (PeristalticPump or None): The buffer pump object or None.
+            balances (Balance): The balance object to manage fluid balances.
+            transducers (PressureTransducer): The pressure transducers.
+            pinch_valve (PinchValve): The pinch valve object.
+        """
         self.feed_pump = feed_pump
         self.permeate_pump = permeate_pump
         self.buffer_pump = buffer_pump
@@ -276,12 +318,13 @@ class Model:
         permeate_pump_ml_min = self.permeate_pump.live[0].ml_min
         pv_position = self.pinch_valve.live[0].pct_open
 
-        balance_rocs[self.permeate_balance_index] = permeate_pump_ml_min * \
-            (1.0 + self.retentate_scale_error_pct)
+        balance_rocs[self.permeate_balance_index] = permeate_pump_ml_min * (
+            1.0 + self.retentate_scale_error_pct
+        )
 
         balance_rocs[self.feed_balance_index] = -1 * (
-            balance_rocs[self.buffer_balance_index] +
-            balance_rocs[self.permeate_balance_index]
+            balance_rocs[self.buffer_balance_index]
+            + balance_rocs[self.permeate_balance_index]
         )
 
         # mL/min to mL/s
@@ -289,11 +332,17 @@ class Model:
 
         self.balances.set_sim_rates_of_change(balance_rocs)
 
-        feed_pressure, retentate_pressure, permeate_pressure = self.pressure_model.calc_pressures(
-            feed_pump_ml_min, permeate_pump_ml_min, pv_position)
+        (
+            feed_pressure,
+            retentate_pressure,
+            permeate_pressure,
+        ) = self.pressure_model.calc_pressures(
+            feed_pump_ml_min, permeate_pump_ml_min, pv_position
+        )
 
         self.transducers.set_sim_values(
-            [feed_pressure, retentate_pressure, permeate_pressure], PressureUnits.PSI)
+            [feed_pressure, retentate_pressure, permeate_pressure], PressureUnits.PSI
+        )
 
 
 if __name__ == "__main__":
@@ -335,8 +384,9 @@ if __name__ == "__main__":
     transducers.set_sim_noise([0.0001, 0.0001, 0.0001])
 
     # Create an instance of the PressureModel
-    model = Model(feed_pump, permeate_pump, buffer_pump,
-                  balances, transducers, pinch_valve)
+    model = Model(
+        feed_pump, permeate_pump, buffer_pump, balances, transducers, pinch_valve
+    )
 
     # Continuous pressure calculation loop
     while True:
