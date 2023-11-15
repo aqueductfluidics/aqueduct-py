@@ -29,6 +29,7 @@ class OpticalDensityProbeLiveKeys(enum.Enum):
     od = "od"
     transmitted = "t"
     ninety_deg = "n"
+    mcfarland = "m"
 
 
 class OpticalDensityProbeLive:
@@ -37,26 +38,32 @@ class OpticalDensityProbeLive:
 
     Attributes:
         od (float): The optical density reading value of the probe (dimensionless).
+        mcfarland (float): The McFarland reading value of the probe (dimensionless).
         transmitted (float): The transmitted intensity value from the probe (counts).
         ninety_deg (float): The 90 degree scattered intensity value from the probe (counts).
     """
 
     mapping = {
         OpticalDensityProbeLiveKeys.od: "od",
+        OpticalDensityProbeLiveKeys.mcfarland: "mcfarland",
         OpticalDensityProbeLiveKeys.transmitted: "transmitted",
         OpticalDensityProbeLiveKeys.ninety_deg: "ninety_deg",
     }
 
-    def __init__(self, od: float, transmitted: float, ninety_deg: float):
+    def __init__(
+        self, od: float, mcfarland: float, transmitted: float, ninety_deg: float
+    ):
         """
         Initialize an OpticalDensityProbeLive instance.
 
         Args:
             od (float): The optical density reading value of the probe (dimensionless).
+            mcfarland (float): The McFarland reading value of the probe (dimensionless).
             transmitted (float): The transmitted intensity value from the probe (counts).
             ninety_deg (float): The 90 degree scattered intensity value from the probe (counts).
         """
         self.od = od
+        self.mcfarland = mcfarland
         self.transmitted = transmitted
         self.ninety_deg = ninety_deg
 
@@ -112,14 +119,19 @@ class OpticalDensityProbe(aqueduct.devices.base.obj.Device):
             index: The index of the probe from which to read the values.
 
         Returns:
-            A tuple containing the optical density, transmitted, and 90 degree scattered intensity values,
+            A tuple containing the optical density, McFarland value, transmitted, and 90 degree scattered intensity values,
             respectively.
 
         Raises:
             IndexError: If the given index is out of range.
         """
         l = self.live
-        return (l[index].od, l[index].transmitted, l[index].ninety_deg)
+        return (
+            l[index].od,
+            l[index].mcfarland,
+            l[index].transmitted,
+            l[index].ninety_deg,
+        )
 
     def get_value(self, index: int = 0):
         """Alias for the `value` method.
@@ -136,16 +148,17 @@ class OpticalDensityProbe(aqueduct.devices.base.obj.Device):
         """
         return self.value(index)
 
-    def get_all_values(self) -> Tuple[Tuple[float, float, float]]:
+    def get_all_values(self) -> Tuple[Tuple[float, float, float, float]]:
         """Get the optical density, transmitted, and 90 degree scattered intensity values from all probes.
 
         Returns:
-            A tuple of tuples, where each inner tuple contains the optical density, transmitted, and 90 degree
+            A tuple of tuples, where each inner tuple contains the optical density, McFarland, transmitted, and 90 degree
             scattered intensity values, respectively, for a single probe.
         """
         return self.extract_live_as_tuple_of_tuples(
             (
                 OpticalDensityProbeLiveKeys.od.value,
+                OpticalDensityProbeLiveKeys.mcfarland.value,
                 OpticalDensityProbeLiveKeys.transmitted.value,
                 OpticalDensityProbeLiveKeys.ninety_deg.value,
             )
@@ -160,7 +173,19 @@ class OpticalDensityProbe(aqueduct.devices.base.obj.Device):
             A tuple of optical density values for all probes.
         """
         all_values = self.get_all_values()
-        od_values = tuple(od for od, _, _ in all_values)
+        od_values = tuple(od for od, _, _, _ in all_values)
+        return od_values
+
+    @property
+    def mcfarland(self) -> Tuple[float]:  # pylint: disable=invalid-name
+        """
+        Get the McFarland values from all probes.
+
+        Returns:
+            A tuple of McFarland values for all probes.
+        """
+        all_values = self.get_all_values()
+        od_values = tuple(m for _, m, _, _ in all_values)
         return od_values
 
     @property
@@ -172,7 +197,7 @@ class OpticalDensityProbe(aqueduct.devices.base.obj.Device):
             A tuple of transmitted intensity values for all probes.
         """
         all_values = self.get_all_values()
-        transmitted_values = tuple(transmitted for _, transmitted, _ in all_values)
+        transmitted_values = tuple(transmitted for _, _, transmitted, _ in all_values)
         return transmitted_values
 
     @property
@@ -184,7 +209,7 @@ class OpticalDensityProbe(aqueduct.devices.base.obj.Device):
             A tuple of 90 degree scattered intensity values for all probes.
         """
         all_values = self.get_all_values()
-        ninety_deg_values = tuple(ninety_deg for _, _, ninety_deg in all_values)
+        ninety_deg_values = tuple(ninety_deg for _, _, _, ninety_deg in all_values)
         return ninety_deg_values
 
     def to_pid_process_value(
