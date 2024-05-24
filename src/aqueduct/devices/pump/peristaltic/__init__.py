@@ -8,7 +8,14 @@ from aqueduct.core.pid import AccessorData
 from aqueduct.core.pid import AccessorKind
 from aqueduct.core.socket_constants import Actions
 from aqueduct.devices.base.obj import Command
+from aqueduct.devices.base.obj import DeviceKeys
 from aqueduct.devices.base.obj import Device
+from aqueduct.devices.base.obj import DeviceConfigInnerKeys
+from aqueduct.devices.base.obj import DeviceConfigKeys
+
+from .types import Config
+from .types import aqueduct
+from .types import masterflex
 
 
 # pylint: disable=invalid-name
@@ -70,6 +77,17 @@ class FiniteUnits(enum.IntEnum):
 
 
 class StartCommand(Command):
+    """
+    Command to start the peristaltic pump.
+
+    Attributes:
+        mode (Mode): Operational mode of the pump (Continuous or Finite).
+        direction (Status): Direction of the pump (Clockwise or CounterClockwise).
+        rate_value (Union[float, int]): Speed of the pump.
+        rate_units (RateUnits): Units of the speed (e.g., Rpm, MlMin).
+        finite_value (Union[float, int, None], optional): Value for finite mode operation. Defaults to None.
+        finite_units (Union[FiniteUnits, None], optional): Units for finite mode operation. Defaults to None.
+    """
     mode: Mode
     direction: Status
     rate_value: Union[float, int]
@@ -94,6 +112,12 @@ class StartCommand(Command):
         self.finite_units = finite_units
 
     def to_command(self):
+        """
+        Converts the StartCommand object to a tuple.
+
+        Returns:
+            tuple: A tuple containing the command attributes.
+        """
         return (
             self.mode,
             self.direction,
@@ -105,6 +129,12 @@ class StartCommand(Command):
 
 
 class StopCommand(Command):
+    """
+    Command to stop the peristaltic pump.
+
+    Attributes:
+        stop (int): Stop command indicator.
+    """
     stop: int
 
     def __init__(self, **kwargs):
@@ -116,10 +146,23 @@ class StopCommand(Command):
                     setattr(self, k, v)
 
     def to_command(self):
+        """
+        Converts the StopCommand object to an integer.
+
+        Returns:
+            int: Stop command indicator.
+        """
         return self.stop
 
 
 class ChangeSpeedCommand(Command):
+    """
+    Command to change the speed of the peristaltic pump.
+
+    Attributes:
+        rate_value (Union[float, int]): New speed of the pump.
+        rate_units (RateUnits): Units of the new speed (e.g., Rpm, MlMin).
+    """
     rate_value: Union[float, int]
     rate_units: RateUnits
 
@@ -128,6 +171,12 @@ class ChangeSpeedCommand(Command):
         self.rate_units = rate_units
 
     def to_command(self):
+        """
+        Converts the ChangeSpeedCommand object to a tuple.
+
+        Returns:
+            tuple: A tuple containing the rate units and rate value.
+        """
         return self.rate_units, self.rate_value
 
 
@@ -204,6 +253,108 @@ class PeristalticPump(Device):
         """
         return self.get_live_and_cast(PeristalticPumpLive.from_live)
 
+    @property
+    def config(self) -> Union[tuple, None]:
+        """
+        Get the configuration data for the syringe pump device.
+
+        This property retrieves the device configuration and casts it to the appropriate types.
+
+        :return: The device configuration data.
+        :rtype: Union[tuple, None]
+        """
+
+        def cast_config(data):
+            if (
+                data
+                and data.get(DeviceConfigKeys.Type.value) == Config.StepperMotor.value
+            ):
+                configs = []
+                for _i, d in enumerate(
+                    data.get(DeviceConfigKeys.Config.value).get(
+                        DeviceConfigInnerKeys.Data.value
+                    )
+                ):
+                    configs.append(aqueduct.StepperMotorConfig(**d))
+                data[DeviceConfigKeys.Config.value][
+                    DeviceConfigInnerKeys.Data.value
+                ] = configs
+                return data
+            elif (
+                data
+                and data.get(DeviceConfigKeys.Type.value) == Config.MixedSignal.value
+            ):
+                configs = []
+                for _i, d in enumerate(
+                    data.get(DeviceConfigKeys.Config.value).get(
+                        DeviceConfigInnerKeys.Data.value
+                    )
+                ):
+                    configs.append(masterflex.MixedSignal(**d))
+                data[DeviceConfigKeys.Config.value][
+                    DeviceConfigInnerKeys.Data.value
+                ] = configs
+                return data
+            else:
+                return data
+
+        return self.get_config_and_cast(cast_config)
+
+    def set_config(
+        self,
+        config: List[Union[aqueduct.StepperMotorConfig, masterflex.MixedSignal]],
+    ):
+        """
+        Update the peristaltic pump configuration based on modifications.
+
+        Only fields set in the modifications (not None) will be updated.
+
+        :param modifications: A list of configuration class instances with modifications.
+        :param record: Whether to record the command. If None, the default setting is used.
+        """
+
+        def apply_modifications(current_config, modifications):
+            updated_config = []  # This will be your updated configuration payload
+
+            # Iterate over both current_config and modifications simultaneously
+            for i, current in enumerate(current_config):
+                if i < len(modifications):
+                    modification = modifications[i]
+                    if isinstance(current, dict):
+                        current_dict = current
+                    else:
+                        current_dict = current.to_dict()
+
+                    mod_dict = modification.to_dict()
+
+                    # Update fields in current_dict with those in mod_dict
+                    for key, value in mod_dict.items():
+                        # Only update modified fields
+                        if value is not None and value != current_dict.get(key):
+                            current_dict[key] = value
+
+                    updated_config.append(current_dict)
+                else:
+                    updated_config.append({})
+
+            return updated_config
+
+        # Fetch the current configuration from the device.
+        current_config = self.config.get(
+            DeviceConfigKeys.Config.value).get(DeviceConfigInnerKeys.Data.value)
+
+        # Construct a new configuration based on modifications.
+        updated_config = apply_modifications(
+            current_config, config)
+
+        payload = self.to_payload(
+            Actions.SetConfig,
+            {DeviceKeys.Config.value: updated_config,
+                DeviceKeys.Base.value: {}, DeviceKeys.Stat.value: []},
+        )
+
+        self.send_command(payload)
+
     def start(
         self,
         commands: List[Union[StartCommand, None]],
@@ -230,7 +381,8 @@ class PeristalticPump(Device):
         :rtype: None
         """
         commands = self.map_commands(commands)
-        payload = self.to_payload(Actions.Start, {"commands": commands}, record)
+        payload = self.to_payload(
+            Actions.Start, {"commands": commands}, record)
         self.send_command(payload)
 
     def change_speed(
@@ -256,7 +408,8 @@ class PeristalticPump(Device):
         :rtype: None
         """
         commands = self.map_commands(commands)
-        payload = self.to_payload(Actions.ChangeSpeed, {"commands": commands}, record)
+        payload = self.to_payload(Actions.ChangeSpeed, {
+                                  "commands": commands}, record)
         self.send_command(payload)
 
     def stop(

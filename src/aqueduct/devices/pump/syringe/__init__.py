@@ -55,8 +55,6 @@ from .types import Config
 from .types import tricontinent
 
 # pylint: disable=invalid-name
-
-
 class Mode(enum.IntEnum):
     """Operational Mode of the `SyringePump`. Use this value to set the operation to continuous or finite."""
 
