@@ -31,3 +31,4 @@
 build/*
 dist/
 temp/
+*.whl

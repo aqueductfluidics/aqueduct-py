@@ -352,8 +352,6 @@ class Device:
             [SocketCommands.SocketMessage.value, [Events.DEVICE_ACTION.value, payload]]
         ).encode()
 
-        print(message)
-
         return send_and_wait_for_rx(
             message,
             self._socket,

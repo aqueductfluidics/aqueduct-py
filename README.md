@@ -14,6 +14,12 @@ To get started with the Aqueduct Fluidics Core Application, simply install it us
 pip install aqueduct-py
 ```
 
+## Building Wheel
+
+```text
+python -m pip wheel
+```
+
 ## Testing
 
 Install with dev dependencies.
