@@ -100,6 +100,30 @@ class Prompt:
                 if data == "ack":
                     return False
 
+    def clear(self):
+        """
+        Clear (dismiss) the prompt.
+
+        Returns:
+            None
+        """
+        message = json.dumps(
+            [
+                SocketCommands.SocketMessage.value,
+                [
+                    Events.DO_RECIPE_PROMPT.value,
+                    dict(user_id=self._aq.user_id),
+                ],
+            ]
+        ).encode()
+
+        send_and_wait_for_rx(
+            message=message,
+            sock=self._aq.socket,
+            lock=self._aq.socket_lock,
+            response=Events.DO_RECIPE_PROMPT.value,
+        )
+
     def serialize(self):
         """
         Returns a dictionary of the prompt object.

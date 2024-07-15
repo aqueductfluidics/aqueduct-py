@@ -33,6 +33,7 @@ class Events(enum.Enum):
     DELETE_PID_CONTROLLERS = "delete_pid_controllers"
     DELETED_PID_CONTROLLERS = "delete_pid_controllers"
     DEVICE_ACTION = "device_action"
+    DO_RECIPE_PROMPT = "do_recipe_prompt"
     GET_DEVICE = "get_device"
     GET_DEVICE_LIVE = "get_device_live"
     GET_RECIPE_INPUT = "get_recipe_input"
