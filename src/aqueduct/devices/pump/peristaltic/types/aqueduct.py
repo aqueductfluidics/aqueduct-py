@@ -9,6 +9,7 @@ class StepperMotorConfigKeys(Enum):
     RevPerMl = "rev_per_ml"
     StepsPerRev = "steps_per_rev"
 
+
 class StepperMotorConfig:
     """
     Configuration data for a stepper motor pump.

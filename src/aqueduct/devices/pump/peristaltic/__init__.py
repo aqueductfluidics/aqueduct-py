@@ -8,13 +8,13 @@ from aqueduct.core.pid import AccessorData
 from aqueduct.core.pid import AccessorKind
 from aqueduct.core.socket_constants import Actions
 from aqueduct.devices.base.obj import Command
-from aqueduct.devices.base.obj import DeviceKeys
 from aqueduct.devices.base.obj import Device
 from aqueduct.devices.base.obj import DeviceConfigInnerKeys
 from aqueduct.devices.base.obj import DeviceConfigKeys
+from aqueduct.devices.base.obj import DeviceKeys
 
-from .types import Config
 from .types import aqueduct
+from .types import Config
 from .types import masterflex
 
 
@@ -88,6 +88,7 @@ class StartCommand(Command):
         finite_value (Union[float, int, None], optional): Value for finite mode operation. Defaults to None.
         finite_units (Union[FiniteUnits, None], optional): Units for finite mode operation. Defaults to None.
     """
+
     mode: Mode
     direction: Status
     rate_value: Union[float, int]
@@ -135,6 +136,7 @@ class StopCommand(Command):
     Attributes:
         stop (int): Stop command indicator.
     """
+
     stop: int
 
     def __init__(self, **kwargs):
@@ -163,6 +165,7 @@ class ChangeSpeedCommand(Command):
         rate_value (Union[float, int]): New speed of the pump.
         rate_units (RateUnits): Units of the new speed (e.g., Rpm, MlMin).
     """
+
     rate_value: Union[float, int]
     rate_units: RateUnits
 
@@ -340,17 +343,20 @@ class PeristalticPump(Device):
             return updated_config
 
         # Fetch the current configuration from the device.
-        current_config = self.config.get(
-            DeviceConfigKeys.Config.value).get(DeviceConfigInnerKeys.Data.value)
+        current_config = self.config.get(DeviceConfigKeys.Config.value).get(
+            DeviceConfigInnerKeys.Data.value
+        )
 
         # Construct a new configuration based on modifications.
-        updated_config = apply_modifications(
-            current_config, config)
+        updated_config = apply_modifications(current_config, config)
 
         payload = self.to_payload(
             Actions.SetConfig,
-            {DeviceKeys.Config.value: updated_config,
-                DeviceKeys.Base.value: {}, DeviceKeys.Stat.value: []},
+            {
+                DeviceKeys.Config.value: updated_config,
+                DeviceKeys.Base.value: {},
+                DeviceKeys.Stat.value: [],
+            },
         )
 
         self.send_command(payload)
@@ -381,8 +387,7 @@ class PeristalticPump(Device):
         :rtype: None
         """
         commands = self.map_commands(commands)
-        payload = self.to_payload(
-            Actions.Start, {"commands": commands}, record)
+        payload = self.to_payload(Actions.Start, {"commands": commands}, record)
         self.send_command(payload)
 
     def change_speed(
@@ -408,8 +413,7 @@ class PeristalticPump(Device):
         :rtype: None
         """
         commands = self.map_commands(commands)
-        payload = self.to_payload(Actions.ChangeSpeed, {
-                                  "commands": commands}, record)
+        payload = self.to_payload(Actions.ChangeSpeed, {"commands": commands}, record)
         self.send_command(payload)
 
     def stop(

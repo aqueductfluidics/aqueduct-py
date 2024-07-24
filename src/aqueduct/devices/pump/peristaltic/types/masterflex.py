@@ -22,10 +22,18 @@ class MixedSignal:
     :type tx_adc_write_value_low: float
     """
 
-    def __init__(self, masterflex_sn: str, rx_adc_ml_min_value_high: float, rx_adc_ml_min_value_low: float,
-                 rx_adc_read_value_high: float, rx_adc_read_value_low: float,
-                 tx_adc_ml_min_value_high: float, tx_adc_ml_min_value_low: float,
-                 tx_adc_write_value_high: float, tx_adc_write_value_low: float):
+    def __init__(
+        self,
+        masterflex_sn: str,
+        rx_adc_ml_min_value_high: float,
+        rx_adc_ml_min_value_low: float,
+        rx_adc_read_value_high: float,
+        rx_adc_read_value_low: float,
+        tx_adc_ml_min_value_high: float,
+        tx_adc_ml_min_value_low: float,
+        tx_adc_write_value_high: float,
+        tx_adc_write_value_low: float,
+    ):
         self.masterflex_sn = masterflex_sn
         self.rx_adc_ml_min_value_high = rx_adc_ml_min_value_high
         self.rx_adc_ml_min_value_low = rx_adc_ml_min_value_low
@@ -60,9 +68,16 @@ class MixedSignal:
 
         Each field is checked for presence in the command dictionary before updating.
         """
-        for attr in ['masterflex_sn', 'rx_adc_ml_min_value_high', 'rx_adc_ml_min_value_low',
-                     'rx_adc_read_value_high', 'rx_adc_read_value_low',
-                     'tx_adc_ml_min_value_high', 'tx_adc_ml_min_value_low',
-                     'tx_adc_write_value_high', 'tx_adc_write_value_low']:
+        for attr in [
+            "masterflex_sn",
+            "rx_adc_ml_min_value_high",
+            "rx_adc_ml_min_value_low",
+            "rx_adc_read_value_high",
+            "rx_adc_read_value_low",
+            "tx_adc_ml_min_value_high",
+            "tx_adc_ml_min_value_low",
+            "tx_adc_write_value_high",
+            "tx_adc_write_value_low",
+        ]:
             if attr in command:
                 setattr(self, attr, command[attr])

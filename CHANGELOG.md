@@ -5,13 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.0.7] - XXXX-XX-XX
+## [0.0.11] - XXXX-XX-XX
 
 ### Fixed
 
 ### Added
 
 ### Changed
+
+## [0.0.10] - 2024-07-24
+
+### Fixed
+
+### Added
+
+- Add ability to set config for peristaltic pump (see `peristaltic_pump_set_config_demo.py` in the Examples for a demo)
+- Add the ability to clear a prompt using the `prompt.clear()` method (requires `version 0.0.10` of the Aqueduct application)
+
+### Changed
+
+## [0.0.9] - Skipped
+
+## [0.0.8] - Skipped
+
+## [0.0.7] - Skipped
 
 ## [0.0.6] - 2023-11-15
 
